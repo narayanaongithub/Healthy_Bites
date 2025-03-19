@@ -207,6 +207,30 @@
 
     <script src="../static/js/menu.js" type="text/javascript"></script>
     <script src="../static/js/confirmation.js"></script>
+    <script src="../static/js/cart-count.js"></script>
+    <script>
+      // Fix for dropdown functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const userMenuBtn = document.getElementById("userMenuBtn");
+        const userDropdown = document.getElementById("userDropdown");
+
+        if (userMenuBtn && userDropdown) {
+          userMenuBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            userDropdown.classList.toggle("active");
+          });
+
+          document.addEventListener("click", function (e) {
+            if (
+              !userMenuBtn.contains(e.target) &&
+              !userDropdown.contains(e.target)
+            ) {
+              userDropdown.classList.remove("active");
+            }
+          });
+        }
+      });
+    </script>
   </body>
 </html>
-
