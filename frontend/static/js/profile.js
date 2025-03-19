@@ -6,6 +6,11 @@ let profileDataLoaded = false; // Track if we've successfully loaded profile dat
 
 // Initialize everything when the DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
+  // Make sure cart exists - if the menu.js cart initialization somehow fails
+  if (!localStorage.getItem("cart")) {
+    localStorage.setItem("cart", JSON.stringify([]));
+  }
+
   // API URL - Using our API Gateway
   API_BASE_URL = "http://localhost:5000/api";
 
