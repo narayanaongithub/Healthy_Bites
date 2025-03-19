@@ -245,29 +245,59 @@ document.addEventListener("DOMContentLoaded", async function () {
   function createProductCard(product) {
     const card = document.createElement("div");
     card.className = "product-card";
+    card.setAttribute("data-meal-type", product.meal_type || "default");
 
     // Format price
     const formattedPrice = parseFloat(product.price).toFixed(2);
 
-    // Tags
+    // Handle tags if available
     const tagsHTML =
       product.tags && product.tags.length > 0
-        ? `<div class="product-tags">${product.tags
+        ? `<div class="product-tags">
+          ${product.tags
             .map((tag) => `<span class="product-tag">${tag}</span>`)
-            .join("")}</div>`
+            .join("")}
+         </div>`
         : "";
 
-    // Use appropriate image path
-    const timestamp = new Date().getTime(); // Add timestamp to prevent caching
-    const imagePath = product.image_url
-      ? product.image_url.startsWith("http")
+    // Use appropriate image path with timestamp to prevent caching
+    const timestamp = new Date().getTime();
+
+    // Build image path based on available information
+    let imagePath;
+    if (product.image_url) {
+      imagePath = product.image_url.startsWith("http")
         ? product.image_url
-        : `../static/images/${product.image_url}?t=${timestamp}`
-      : "../static/images/default-meal.jpg?t=${timestamp}";
+        : `../static/images/${product.image_url}?t=${timestamp}`;
+    } else if (product.image) {
+      imagePath = product.image.startsWith("http")
+        ? product.image
+        : `../static/images/${product.image}?t=${timestamp}`;
+    } else {
+      // Use default images based on meal type
+      const mealTypeImages = {
+        breakfast: "breakfast.jpg",
+        lunch: "lunch.webp",
+        dinner: "dinner.jpg",
+      };
+      imagePath = `../static/images/${
+        mealTypeImages[product.meal_type] || "default-meal.jpg"
+      }?t=${timestamp}`;
+    }
+
+    // Create fallback image handler based on meal type
+    const fallbackImage =
+      product.meal_type === "lunch"
+        ? "lunch.webp"
+        : product.meal_type === "dinner"
+        ? "dinner.jpg"
+        : "breakfast.jpg";
+
+    const imgErrorHandler = `onerror="this.onerror=null; this.src='../static/images/${fallbackImage}?t=${timestamp}';"`;
 
     card.innerHTML = `
       <div class="product-image">
-        <img src="${imagePath}" alt="${product.name}">
+        <img src="${imagePath}" alt="${product.name}" ${imgErrorHandler}>
         ${
           product.is_featured
             ? '<span class="featured-badge">Featured</span>'
@@ -275,6 +305,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       </div>
       <div class="product-content">
+        <div class="product-category">${
+          product.meal_type.charAt(0).toUpperCase() + product.meal_type.slice(1)
+        }</div>
         <h3 class="product-title">${product.name}</h3>
         <p class="product-description">${
           product.description || "A delicious and nutritious meal option."
@@ -282,84 +315,199 @@ document.addEventListener("DOMContentLoaded", async function () {
         ${tagsHTML}
         <div class="product-footer">
           <span class="product-price">$${formattedPrice}</span>
-          <button class="add-to-cart-btn" data-product-id="${
-            product.id
-          }" onclick="addToCart(${JSON.stringify(product).replace(
-      /"/g,
-      "&quot;"
-    )})">
+          <button class="add-to-cart-btn" data-product-id="${product.id}">
             <i class="fas fa-cart-plus"></i> Add to Cart
           </button>
         </div>
       </div>
     `;
 
+    // Add event listener for Add to Cart button
+    const addToCartBtn = card.querySelector(".add-to-cart-btn");
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener("click", function () {
+        addToCart(product);
+      });
+    }
+
     return card;
   }
 
   async function fetchAllProducts() {
     try {
-      const response = await fetch("http://localhost:5003/api/products");
-      if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
-      }
+      // Fetch products from all three meal types
+      const mealTypes = ["breakfast", "lunch", "dinner"];
+      let allProducts = [];
 
-      const data = await response.json();
-      console.log(`Fetched ${data.length} products from API`);
+      // Use Promise.all to fetch all meal types in parallel
+      const responses = await Promise.all(
+        mealTypes.map((type) =>
+          fetch(`http://localhost:5003/api/products/meal/${type}`)
+            .then((response) => {
+              if (!response.ok) {
+                console.warn(
+                  `API returned status ${response.status} for ${type} meals`
+                );
+                return { json: () => Promise.resolve([]) };
+              }
+              return response;
+            })
+            .then((response) => response.json())
+            .catch((error) => {
+              console.error(`Error fetching ${type} meals:`, error);
+              return [];
+            })
+        )
+      );
 
-      // Process any string dietary tags into arrays
-      data.forEach((product) => {
-        if (product.dietary_tags && typeof product.dietary_tags === "string") {
-          product.tags = product.dietary_tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag);
-        } else if (Array.isArray(product.dietary_tags)) {
-          product.tags = product.dietary_tags;
-        } else {
-          product.tags = [];
-        }
+      // Process each meal type's response
+      responses.forEach((meals, index) => {
+        const mealType = mealTypes[index];
+        console.log(`Fetched ${meals.length} ${mealType} meals`);
+
+        // Process and add each meal to allProducts
+        meals.forEach((meal) => {
+          // Ensure meal has the correct meal_type
+          meal.meal_type = mealType;
+
+          // Process tags
+          if (meal.dietary_tags && typeof meal.dietary_tags === "string") {
+            meal.tags = meal.dietary_tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag);
+          } else {
+            meal.tags = [];
+          }
+
+          allProducts.push(meal);
+        });
       });
 
-      return data;
+      console.log(`Total products fetched: ${allProducts.length}`);
+      return allProducts;
     } catch (error) {
       console.error("Error fetching products:", error);
-      // Return an empty array in case of error - don't use mock data
-      return [];
+      // Return fallback data if API fails
+      return getFallbackData();
     }
   }
 
   function getFallbackData() {
-    // This function is kept empty as we're not using mock data
-    return [];
+    console.log("Using fallback data for products");
+
+    // Create sample products for each meal type
+    const sampleProducts = [
+      // Breakfast items
+      {
+        id: 1,
+        name: "Avocado Toast with Eggs",
+        description: "Whole grain toast topped with avocado and poached eggs",
+        price: 8.99,
+        image: "breakfast.jpg",
+        meal_type: "breakfast",
+        tags: ["Vegetarian", "High-protein"],
+        is_featured: true,
+      },
+      {
+        id: 2,
+        name: "Greek Yogurt Parfait",
+        description: "Greek yogurt with fresh berries, honey and granola",
+        price: 6.99,
+        image: "breakfast.jpg",
+        meal_type: "breakfast",
+        tags: ["Vegetarian", "Low-calorie"],
+      },
+      // Lunch items
+      {
+        id: 3,
+        name: "Grilled Chicken Salad",
+        description:
+          "Fresh greens with grilled chicken, avocado and light dressing",
+        price: 10.99,
+        image: "lunch.webp",
+        meal_type: "lunch",
+        tags: ["High-protein", "Low-carb"],
+      },
+      {
+        id: 4,
+        name: "Quinoa Veggie Bowl",
+        description: "Protein-rich quinoa with roasted seasonal vegetables",
+        price: 9.99,
+        image: "lunch.webp",
+        meal_type: "lunch",
+        tags: ["Vegan", "Gluten-free"],
+      },
+      // Dinner items
+      {
+        id: 5,
+        name: "Baked Salmon",
+        description: "Wild-caught salmon with roasted vegetables and quinoa",
+        price: 14.99,
+        image: "dinner.jpg",
+        meal_type: "dinner",
+        tags: ["High-protein", "Omega-3"],
+      },
+      {
+        id: 6,
+        name: "Vegetable Stir Fry",
+        description: "Fresh vegetables stir-fried with tofu in a light sauce",
+        price: 11.99,
+        image: "dinner.jpg",
+        meal_type: "dinner",
+        tags: ["Vegan", "Low-calorie"],
+      },
+    ];
+
+    return sampleProducts;
   }
 });
 
 // Add to cart function
 function addToCart(product) {
-  // Get current cart from localStorage
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  try {
+    // Get current cart from localStorage
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  // Check if product is already in cart
-  const existingProductIndex = cart.findIndex((item) => item.id === product.id);
+    // Ensure product has all required properties
+    const productToAdd = {
+      id: product.id,
+      name: product.name,
+      price: parseFloat(product.price),
+      meal_type: product.meal_type,
+      quantity: 1,
+      image: product.image || null,
+      image_url: product.image_url || null,
+      description: product.description || "",
+    };
 
-  if (existingProductIndex >= 0) {
-    // Product exists, increase quantity
-    cart[existingProductIndex].quantity += 1;
-  } else {
-    // Product doesn't exist, add to cart with quantity 1
-    product.quantity = 1;
-    cart.push(product);
+    // Check if product is already in cart
+    const existingProductIndex = cart.findIndex(
+      (item) => item.id === product.id
+    );
+
+    if (existingProductIndex >= 0) {
+      // Product exists, increase quantity
+      cart[existingProductIndex].quantity += 1;
+    } else {
+      // Add new product to cart
+      cart.push(productToAdd);
+    }
+
+    // Save updated cart to localStorage
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    // Update cart count display
+    updateCartCount();
+
+    // Show notification
+    showNotification(`Added ${product.name} to cart`);
+
+    console.log("Updated cart:", cart);
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    showNotification("Error adding item to cart");
   }
-
-  // Save updated cart to localStorage
-  localStorage.setItem("cart", JSON.stringify(cart));
-
-  // Update cart count display
-  updateCartCount();
-
-  // Show notification
-  showNotification(`Added ${product.name} to cart`);
 }
 
 // Update cart count
@@ -405,15 +553,39 @@ function showNotification(message) {
   }, 3000);
 }
 
-// Initialize cart
+// Initialize cart functionality
 function initializeCart() {
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  // Initialize cart or get existing cart
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-  // Check if cart exists
-  if (!localStorage.getItem("cart")) {
-    localStorage.setItem("cart", JSON.stringify([]));
-  }
+  // Clean up the cart to remove any problematic items
+  cart = cart.map((item) => {
+    // Ensure item has all required properties in the correct format
+    return {
+      id: item.id,
+      name: typeof item.name === "string" ? item.name : "Unknown Item",
+      price:
+        typeof item.price === "number"
+          ? item.price
+          : typeof item.price === "string"
+          ? parseFloat(item.price)
+          : 0,
+      meal_type: item.meal_type || "default",
+      quantity: typeof item.quantity === "number" ? item.quantity : 1,
+      image: item.image && typeof item.image === "string" ? item.image : null,
+      image_url:
+        item.image_url && typeof item.image_url === "string"
+          ? item.image_url
+          : null,
+    };
+  });
+
+  // Save the clean cart back to localStorage
+  localStorage.setItem("cart", JSON.stringify(cart));
 
   // Update cart count
   updateCartCount();
+
+  // Add global function for backward compatibility
+  window.addToCart = addToCart;
 }

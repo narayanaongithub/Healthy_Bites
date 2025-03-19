@@ -176,57 +176,81 @@ document.addEventListener("DOMContentLoaded", async function () {
         ${tagsHTML}
         <div class="meal-footer">
           <span class="meal-price">$${formattedPrice}</span>
-          <button class="add-to-cart-btn" data-product-id="${
-            meal.id
-          }" onclick="addToCart(${JSON.stringify(meal).replace(
-      /"/g,
-      "&quot;"
-    )})">
+          <button class="add-to-cart-btn" data-product-id="${meal.id}">
             <i class="fas fa-cart-plus"></i> Add to Cart
           </button>
         </div>
       </div>
     `;
 
+    // Add event listener to the Add to Cart button
+    const addToCartBtn = card.querySelector(".add-to-cart-btn");
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener("click", function () {
+        addToCart(meal);
+      });
+    }
+
     return card;
   }
 
   // Add to cart function
   function addToCart(product) {
-    // Get current cart from localStorage
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    try {
+      // Get current cart from localStorage
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    // Check if product is already in cart
-    const existingProductIndex = cart.findIndex(
-      (item) => item.id === product.id
-    );
+      // Check if product is already in cart
+      const existingProductIndex = cart.findIndex(
+        (item) => item.id === product.id
+      );
 
-    if (existingProductIndex >= 0) {
-      // Product exists, increase quantity
-      cart[existingProductIndex].quantity += 1;
-    } else {
-      // Product doesn't exist, add to cart with quantity 1
-      product.quantity = 1;
-      cart.push(product);
+      if (existingProductIndex >= 0) {
+        // Product exists, increase quantity
+        cart[existingProductIndex].quantity += 1;
+      } else {
+        // Product doesn't exist, add to cart with quantity 1
+        const productToAdd = {
+          ...product,
+          quantity: 1,
+        };
+        cart.push(productToAdd);
+      }
+
+      // Save updated cart to localStorage
+      localStorage.setItem("cart", JSON.stringify(cart));
+
+      // Update cart count display
+      updateCartCount();
+
+      // Show notification
+      showNotification(`Added ${product.name} to cart`);
+
+      // Log cart state for debugging
+      console.log("Current cart:", cart);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      showNotification("Error adding item to cart");
     }
-
-    // Save updated cart to localStorage
-    localStorage.setItem("cart", JSON.stringify(cart));
-
-    // Update cart count display
-    updateCartCount();
-
-    // Show notification
-    showNotification(`Added ${product.name} to cart`);
   }
 
   // Update cart count
   function updateCartCount() {
-    const cartCountElement = document.getElementById("cartCount");
-    if (cartCountElement) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-      cartCountElement.textContent = totalItems;
+    try {
+      const cartCountElement = document.getElementById("cartCount");
+      if (cartCountElement) {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const totalItems = cart.reduce(
+          (total, item) => total + (item.quantity || 0),
+          0
+        );
+        cartCountElement.textContent = totalItems;
+
+        // Log cart count for debugging
+        console.log("Cart count updated:", totalItems);
+      }
+    } catch (error) {
+      console.error("Error updating cart count:", error);
     }
   }
 
@@ -253,9 +277,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       notification.style.zIndex = "1000";
     }
 
-    // Set message and show notification
+    // Set notification message
     notification.textContent = message;
-    notification.style.transform = "translateX(0)";
+
+    // Show notification
+    setTimeout(() => {
+      notification.style.transform = "translateX(0)";
+    }, 100);
 
     // Hide notification after 3 seconds
     setTimeout(() => {
@@ -265,14 +293,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Initialize cart
   function initializeCart() {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    // Check if cart exists
-    if (!localStorage.getItem("cart")) {
-      localStorage.setItem("cart", JSON.stringify([]));
-    }
-
-    // Update cart count
+    // Initialize cart count on page load
     updateCartCount();
+
+    // Add global function for backward compatibility
+    window.addToCart = addToCart;
   }
 });

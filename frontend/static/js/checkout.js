@@ -1,10 +1,34 @@
 // JavaScript for Checkout Page
 
+// Check for data from our updated processCheckout function
+let checkoutData = JSON.parse(localStorage.getItem("checkoutData"));
+
 // Check if orderSummary exists in localStorage
 let orderSummary = JSON.parse(localStorage.getItem("orderSummary"));
 
+// If we have checkoutData from the new process, use it
+if (checkoutData && checkoutData.pricing) {
+  console.log("Using checkoutData:", checkoutData);
+
+  // Update or create orderSummary from checkoutData
+  orderSummary = {
+    items: checkoutData.items,
+    baseSubtotal: checkoutData.pricing.baseSubtotal,
+    subtotal: checkoutData.pricing.subtotal,
+    tax: checkoutData.pricing.tax,
+    deliveryFee: checkoutData.pricing.deliveryFee,
+    total: checkoutData.pricing.total,
+    discountApplied: checkoutData.pricing.discountApplied,
+    discountAmount: checkoutData.pricing.discountAmount,
+    discountRate: checkoutData.pricing.discountRate,
+    subscription: checkoutData.subscription,
+  };
+
+  // Save to localStorage
+  localStorage.setItem("orderSummary", JSON.stringify(orderSummary));
+}
 // If no order summary exists, create one from the cart
-if (!orderSummary) {
+else if (!orderSummary) {
   // Get cart items and create order summary
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   // Process the cart items to ensure they have proper image paths
@@ -36,10 +60,14 @@ if (!orderSummary) {
   // Create the order summary
   orderSummary = {
     items: processedCart,
+    baseSubtotal: subtotal,
     subtotal: subtotal,
     tax: tax,
     deliveryFee: deliveryFee,
     total: total,
+    discountApplied: false,
+    discountAmount: 0,
+    discountRate: 0,
   };
 
   // Save to localStorage
@@ -64,6 +92,18 @@ const EXPRESS_DELIVERY_FEE = 6.99;
 
 // Function to update order summary display
 function updateOrderSummary() {
+  // Make sure all required elements exist
+  if (
+    !summaryItemsContainer ||
+    !subtotalElement ||
+    !taxElement ||
+    !deliveryFeeElement ||
+    !totalElement
+  ) {
+    console.log("Some required elements for order summary are missing");
+    return;
+  }
+
   // Clear current items
   summaryItemsContainer.innerHTML = "";
 
@@ -143,8 +183,83 @@ function updateOrderSummary() {
     summaryItemsContainer.appendChild(summaryItem);
   });
 
+  // Check if we need to add a discount row
+  const summaryTotals = document.querySelector(".summary-totals");
+  if (orderSummary.discountApplied && orderSummary.discountAmount > 0) {
+    // Check if discount row already exists
+    let discountRow = document.querySelector(".discount-row");
+    if (!discountRow) {
+      // Create discount row
+      discountRow = document.createElement("div");
+      discountRow.className = "summary-row discount-row";
+      discountRow.innerHTML = `
+        <span>Subscriber Discount (${orderSummary.discountRate * 100}%)</span>
+        <span class="discount-amount">-$${orderSummary.discountAmount.toFixed(
+          2
+        )}</span>
+      `;
+
+      // Add subscription expiry info if available
+      if (orderSummary.subscription && orderSummary.subscription.end_date) {
+        const endDate = new Date(orderSummary.subscription.end_date);
+        const formattedEndDate = endDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        const subscriptionInfoElement = document.createElement("div");
+        subscriptionInfoElement.className = "subscription-info";
+        subscriptionInfoElement.innerHTML = `
+          <small style="display: block; color: #2c5d34; margin-top: 4px; font-style: italic;">
+            Subscription active until ${formattedEndDate}
+          </small>
+        `;
+        discountRow.appendChild(subscriptionInfoElement);
+      }
+
+      // Insert the discount row before the tax row
+      const taxRow = document.querySelector(".summary-row:nth-child(3)");
+      if (taxRow) {
+        summaryTotals.insertBefore(discountRow, taxRow);
+      } else {
+        summaryTotals.appendChild(discountRow);
+      }
+    } else {
+      // Update existing discount row
+      const discountAmountElement =
+        discountRow.querySelector(".discount-amount");
+      if (discountAmountElement) {
+        discountAmountElement.textContent = `-$${orderSummary.discountAmount.toFixed(
+          2
+        )}`;
+      }
+    }
+  } else {
+    // Remove discount row if it exists and no discount should be applied
+    const discountRow = document.querySelector(".discount-row");
+    if (discountRow) {
+      discountRow.remove();
+    }
+  }
+
   // Update price elements
-  subtotalElement.textContent = `$${orderSummary.subtotal.toFixed(2)}`;
+  if (orderSummary.discountApplied) {
+    // If there's a base subtotal (before discount), show that too
+    if (subtotalElement && orderSummary.baseSubtotal) {
+      // Change the label to indicate it's before discount
+      const subtotalLabel = subtotalElement.previousElementSibling;
+      if (subtotalLabel) {
+        subtotalLabel.textContent = "Subtotal (before discount)";
+      }
+      subtotalElement.textContent = `$${orderSummary.baseSubtotal.toFixed(2)}`;
+    } else {
+      subtotalElement.textContent = `$${orderSummary.subtotal.toFixed(2)}`;
+    }
+  } else {
+    subtotalElement.textContent = `$${orderSummary.subtotal.toFixed(2)}`;
+  }
+
   taxElement.textContent = `$${orderSummary.tax.toFixed(2)}`;
   deliveryFeeElement.textContent = `$${orderSummary.deliveryFee.toFixed(2)}`;
   totalElement.textContent = `$${orderSummary.total.toFixed(2)}`;
@@ -169,8 +284,12 @@ function updateDeliveryFee() {
 }
 
 // Add event listeners to delivery options
-standardDelivery.addEventListener("change", updateDeliveryFee);
-expressDelivery.addEventListener("change", updateDeliveryFee);
+if (standardDelivery) {
+  standardDelivery.addEventListener("change", updateDeliveryFee);
+}
+if (expressDelivery) {
+  expressDelivery.addEventListener("change", updateDeliveryFee);
+}
 
 // Form validation
 function validateForm() {
@@ -214,79 +333,83 @@ function validateForm() {
 }
 
 // Place order button event listener
-placeOrderBtn.addEventListener("click", function () {
-  if (validateForm()) {
-    // Get form data
-    const formData = {
-      fullName: document.getElementById("fullName").value,
-      email: document.getElementById("email").value,
-      phone: document.getElementById("phone").value,
-      address: document.getElementById("address").value,
-      city: document.getElementById("city").value,
-      state: document.getElementById("state").value,
-      zip: document.getElementById("zip").value,
-      cardName: document.getElementById("cardName").value,
-      cardNumber: document.getElementById("cardNumber").value,
-      expDate: document.getElementById("expDate").value,
-      cvv: document.getElementById("cvv").value,
-      deliveryOption: expressDelivery.checked ? "express" : "standard",
-    };
+if (placeOrderBtn) {
+  placeOrderBtn.addEventListener("click", function () {
+    if (validateForm()) {
+      // Get form data
+      const formData = {
+        fullName: document.getElementById("fullName").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        address: document.getElementById("address").value,
+        city: document.getElementById("city").value,
+        state: document.getElementById("state").value,
+        zip: document.getElementById("zip").value,
+        cardName: document.getElementById("cardName").value,
+        cardNumber: document.getElementById("cardNumber").value,
+        expDate: document.getElementById("expDate").value,
+        cvv: document.getElementById("cvv").value,
+        deliveryOption:
+          expressDelivery && expressDelivery.checked ? "express" : "standard",
+      };
 
-    // Create order object
-    const order = {
-      id: generateOrderId(),
-      date: new Date().toISOString(),
-      items: JSON.parse(JSON.stringify(orderSummary.items)), // Deep clone to preserve all item properties including images
-      subtotal: orderSummary.subtotal,
-      tax: orderSummary.tax,
-      deliveryFee: orderSummary.deliveryFee,
-      total: orderSummary.total,
-      shipping: {
-        name: formData.fullName,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip: formData.zip,
-      },
-      status: "Processing",
-    };
+      // Create order object
+      const order = {
+        id: generateOrderId(),
+        date: new Date().toISOString(),
+        items: JSON.parse(JSON.stringify(orderSummary.items)), // Deep clone to preserve all item properties including images
+        subtotal: orderSummary.subtotal,
+        tax: orderSummary.tax,
+        deliveryFee: orderSummary.deliveryFee,
+        total: orderSummary.total,
+        shipping: {
+          name: formData.fullName,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+        },
+        status: "Processing",
+      };
 
-    // Check if user is a subscriber to include discount info
-    const userData = JSON.parse(localStorage.getItem("userData")) || {};
-    const isSubscriber = userData.subscription && userData.subscription.active;
+      // Check if user is a subscriber to include discount info
+      const userData = JSON.parse(localStorage.getItem("userData")) || {};
+      const isSubscriber =
+        userData.subscription && userData.subscription.active;
 
-    if (isSubscriber) {
-      // Calculate the discount amount (15% of original subtotal)
-      const originalSubtotal = orderSummary.subtotal / 0.85;
-      const discountAmount = originalSubtotal * 0.15;
+      if (isSubscriber) {
+        // Calculate the discount amount (15% of original subtotal)
+        const originalSubtotal = orderSummary.subtotal / 0.85;
+        const discountAmount = originalSubtotal * 0.15;
 
-      // Add discount info to the order
-      order.originalSubtotal = originalSubtotal;
-      order.discountAmount = discountAmount;
-      order.discountPercentage = 15;
-      order.isSubscriberDiscount = true;
+        // Add discount info to the order
+        order.originalSubtotal = originalSubtotal;
+        order.discountAmount = discountAmount;
+        order.discountPercentage = 15;
+        order.isSubscriberDiscount = true;
+      }
+
+      // Save order to localStorage
+      saveOrder(order);
+
+      // Also store the same information in orderDetails for the confirmation page
+      localStorage.setItem(
+        "orderDetails",
+        JSON.stringify({
+          items: orderSummary.items,
+        })
+      );
+
+      // Clear cart
+      localStorage.removeItem("cart");
+
+      // Redirect to confirmation page with order ID
+      window.location.href = `order-confirmation.html?orderId=${order.id}`;
+    } else {
+      alert("Please fill in all required fields correctly.");
     }
-
-    // Save order to localStorage
-    saveOrder(order);
-
-    // Also store the same information in orderDetails for the confirmation page
-    localStorage.setItem(
-      "orderDetails",
-      JSON.stringify({
-        items: orderSummary.items,
-      })
-    );
-
-    // Clear cart
-    localStorage.removeItem("cart");
-
-    // Redirect to confirmation page with order ID
-    window.location.href = `order-confirmation.html?orderId=${order.id}`;
-  } else {
-    alert("Please fill in all required fields correctly.");
-  }
-});
+  });
+}
 
 // Function to generate a random order ID
 function generateOrderId() {
@@ -333,7 +456,15 @@ if (logoutBtn) {
 }
 
 // Initialize the page
-updateOrderSummary();
+if (
+  summaryItemsContainer &&
+  subtotalElement &&
+  taxElement &&
+  deliveryFeeElement &&
+  totalElement
+) {
+  updateOrderSummary();
+}
 
 // Update cart count in header
 function updateCartCount() {
@@ -450,10 +581,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // Call this on page load
   displayCartItems();
 
-  // Handle form submission
-  document
-    .getElementById("checkout-form")
-    .addEventListener("submit", async function (e) {
+  // Handle form submission - Add null check before attaching event listener
+  const checkoutForm = document.getElementById("checkout-form");
+  if (checkoutForm) {
+    checkoutForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
       // Check if user is logged in
@@ -545,30 +676,38 @@ document.addEventListener("DOMContentLoaded", function () {
         showNotification("Failed to create order. Please try again.", "error");
       }
     });
+  }
 
   // Update form with user data if available
   function populateFormWithUserData() {
     const userData = JSON.parse(localStorage.getItem("userData")) || {};
 
-    if (userData.full_name) {
-      document.getElementById("name").value = userData.full_name;
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const phoneInput = document.getElementById("phone");
+    const addressInput = document.getElementById("delivery-address");
+
+    if (nameInput && userData.full_name) {
+      nameInput.value = userData.full_name;
     }
 
-    if (userData.email) {
-      document.getElementById("email").value = userData.email;
+    if (emailInput && userData.email) {
+      emailInput.value = userData.email;
     }
 
-    if (userData.phone) {
-      document.getElementById("phone").value = userData.phone;
+    if (phoneInput && userData.phone) {
+      phoneInput.value = userData.phone;
     }
 
-    if (userData.address) {
-      document.getElementById("delivery-address").value = userData.address;
+    if (addressInput && userData.address) {
+      addressInput.value = userData.address;
     }
   }
 
-  // Call this on page load
-  populateFormWithUserData();
+  // Only call this if we're on a page with the checkout form
+  if (document.getElementById("checkout-form")) {
+    populateFormWithUserData();
+  }
 
   // Function to show notifications
   function showNotification(message, type = "success") {
