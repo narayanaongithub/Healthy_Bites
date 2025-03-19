@@ -82,17 +82,10 @@ body {
   min-width: 200px;
   z-index: 1000;
   display: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
 }
 
 .dropdown-menu.active {
   display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: translateY(0) !important;
 }
 
 .dropdown-menu ul {

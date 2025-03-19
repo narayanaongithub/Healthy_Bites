@@ -9,14 +9,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const formContainer = document.getElementById("subscription-form-container");
   const successContainer = document.getElementById("subscription-success");
 
-  // Check if user menu elements exist to prevent console errors
+  // Initialize user menu dropdown
   const userMenuBtn = document.querySelector(".user-menu-btn");
   const userDropdown = document.querySelector(".dropdown-menu");
 
-  // Only initialize user menu if elements exist
   if (userMenuBtn && userDropdown) {
-    // User menu initialization code
-    userMenuBtn.addEventListener("click", function () {
+    // Toggle dropdown when clicking the button
+    userMenuBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
       userDropdown.classList.toggle("active");
     });
 

@@ -448,30 +448,46 @@
         <div class="footer-content">
           <div class="footer-logo">
             <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
-            <h3>Healthy Bites</h3>
+            <h2>Healthy Bites</h2>
           </div>
           <div class="footer-links">
-            <h4>Quick Links</h4>
-            <ul>
-              <li><a href="#">About Us</a></li>
-              <li><a href="#">Our Menu</a></li>
-              <li><a href="#">How It Works</a></li>
-              <li><a href="#">FAQ</a></li>
-            </ul>
-          </div>
-          <div class="footer-contact">
-            <h4>Contact Us</h4>
-            <p><i class="fas fa-envelope"></i> info@healthybites.com</p>
-            <p><i class="fas fa-phone"></i> (123) 456-7890</p>
-            <div class="social-icons">
-              <a href="#"><i class="fab fa-facebook-f"></i></a>
-              <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-twitter"></i></a>
+            <div class="footer-section">
+              <h3>Company</h3>
+              <ul>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Our Team</a></li>
+                <li><a href="#">Careers</a></li>
+                <li><a href="#">Contact Us</a></li>
+              </ul>
+            </div>
+            <div class="footer-section">
+              <h3>Products</h3>
+              <ul>
+                <li><a href="meal-selection.html">Meal Plans</a></li>
+                <li><a href="products.html">Healthy Products</a></li>
+                <li><a href="subscription.html">Subscription</a></li>
+                <li><a href="#">Gift Cards</a></li>
+              </ul>
+            </div>
+            <div class="footer-section">
+              <h3>Support</h3>
+              <ul>
+                <li><a href="#">FAQ</a></li>
+                <li><a href="#">Shipping</a></li>
+                <li><a href="#">Returns</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+              </ul>
             </div>
           </div>
         </div>
         <div class="footer-bottom">
           <p>&copy; 2025 Healthy Bites. All rights reserved.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-pinterest-p"></i></a>
+          </div>
         </div>
       </div>
     </footer>
@@ -479,5 +495,29 @@
     <script src="../static/js/menu.js"></script>
     <script src="../static/js/subscription.js"></script>
     <script src="../static/js/cart-count.js"></script>
+
+    <!-- Inline script to ensure dropdown works -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const userMenuBtn = document.querySelector(".user-menu-btn");
+        const dropdownMenu = document.querySelector(".dropdown-menu");
+
+        if (userMenuBtn && dropdownMenu) {
+          userMenuBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle("active");
+          });
+
+          document.addEventListener("click", function (e) {
+            if (
+              !userMenuBtn.contains(e.target) &&
+              !dropdownMenu.contains(e.target)
+            ) {
+              dropdownMenu.classList.remove("active");
+            }
+          });
+        }
+      });
+    </script>
   </body>
 </html>

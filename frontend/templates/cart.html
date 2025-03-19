@@ -17,6 +17,27 @@
         position: relative;
       }
 
+      .user-menu-btn {
+        background: none;
+        border: 1px solid transparent;
+        color: #f5efd5;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+      }
+
+      .user-menu-btn:hover,
+      .user-menu-btn:focus {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        outline: none;
+      }
+
       .dropdown-menu {
         display: none;
         position: absolute;
@@ -195,9 +216,23 @@
         event.preventDefault();
         event.stopPropagation();
         const dropdown = document.getElementById("userDropdown");
+        const userMenuBtn = document.getElementById("userMenuBtn");
+
         if (dropdown) {
-          dropdown.style.display =
-            dropdown.style.display === "none" ? "block" : "none";
+          const isActive = dropdown.style.display === "block";
+          dropdown.style.display = isActive ? "none" : "block";
+
+          // Toggle active class on button for styling
+          if (userMenuBtn) {
+            if (isActive) {
+              userMenuBtn.classList.remove("active");
+              userMenuBtn.style.borderColor = "transparent";
+            } else {
+              userMenuBtn.classList.add("active");
+              userMenuBtn.style.borderColor = "rgba(255, 255, 255, 0.5)";
+              userMenuBtn.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+            }
+          }
         }
       }
 
@@ -212,6 +247,10 @@
           !dropdown.contains(event.target)
         ) {
           dropdown.style.display = "none";
+          // Remove active styling
+          userMenuBtn.classList.remove("active");
+          userMenuBtn.style.borderColor = "transparent";
+          userMenuBtn.style.backgroundColor = "transparent";
         }
       });
     </script>
