@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products - Healthy Bites</title>
+    <link rel="stylesheet" href="../static/css/landing.css" />
+    <link rel="stylesheet" href="../static/css/products.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="index.html" class="navbar-brand">
+        <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
+        <h1>Healthy Bites</h1>
+      </a>
+      <div class="navbar-auth">
+        <div class="user-menu">
+          <button class="user-menu-btn">
+            My Account <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu">
+            <ul>
+              <li>
+                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+              </li>
+              <li>
+                <a href="order-history.html"
+                  ><i class="fas fa-history"></i> Order History</a
+                >
+              </li>
+              <li>
+                <a href="subscription.html"
+                  ><i class="fas fa-star"></i> Subscription</a
+                >
+              </li>
+              <li>
+                <a href="products.html" class="active"
+                  ><i class="fas fa-box"></i> Products</a
+                >
+              </li>
+              <li>
+                <a href="landing.html" class="logout-btn"
+                  ><i class="fas fa-sign-out-alt"></i> Logout</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <a href="cart.html" class="cart-icon">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
+    </nav>
+
+    <header class="meals-header products-header">
+      <div class="container">
+        <h1>Our Products</h1>
+        <p>Discover our selection of healthy and nutritious products</p>
+      </div>
+    </header>
+
+    <div class="products-container">
+      <div class="container">
+        <div class="products-sidebar">
+          <div class="search-box">
+            <input
+              type="text"
+              id="productSearch"
+              placeholder="Search products..."
+            />
+            <button><i class="fas fa-search"></i></button>
+          </div>
+
+          <div class="filter-section">
+            <h3>Meal Types</h3>
+            <ul class="category-filters">
+              <li>
+                <label
+                  ><input type="checkbox" value="breakfast" checked />
+                  Breakfast</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="checkbox" value="lunch" checked /> Lunch</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="checkbox" value="dinner" checked />
+                  Dinner</label
+                >
+              </li>
+            </ul>
+          </div>
+
+          <button id="resetFilters" class="reset-filters-btn">
+            Reset Filters
+          </button>
+        </div>
+
+        <div class="products-grid">
+          <div class="products-header">
+            <h2>All Products <span id="productCount">(0)</span></h2>
+            <div class="sort-options">
+              <label for="sortBy">Sort by:</label>
+              <select id="sortBy">
+                <option value="popularity">Popularity</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+                <option value="name-desc">Name: Z to A</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="products-list">
+            <!-- Products will be dynamically added here -->
+          </div>
+
+          <div class="empty-products" style="display: none">
+            <i class="fas fa-search"></i>
+            <h3>No products found</h3>
+            <p>Try adjusting your filters or search criteria</p>
+            <button id="clearFilters" class="clear-filters-btn">
+              Clear All Filters
+            </button>
+          </div>
+
+          <div class="pagination">
+            <button class="prev-btn" disabled>
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="page-numbers">
+              <button class="active">1</button>
+              <button>2</button>
+              <button>3</button>
+            </div>
+            <button class="next-btn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
+            <h3>Healthy Bites</h3>
+          </div>
+          <div class="footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Our Menu</a></li>
+              <li><a href="#">How It Works</a></li>
+              <li><a href="#">FAQ</a></li>
+            </ul>
+          </div>
+          <div class="footer-contact">
+            <h4>Contact Us</h4>
+            <p><i class="fas fa-envelope"></i> info@healthybites.com</p>
+            <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+            <div class="social-icons">
+              <a href="#"><i class="fab fa-facebook-f"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Healthy Bites. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../static/js/menu.js" type="text/javascript"></script>
+    <!-- Remove meal-data.js to use database API -->
+    <script src="../static/js/products.js"></script>
+  </body>
+</html>

@@ -1,0 +1,164 @@
+version: "3"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/static:/usr/share/nginx/html/static
+      - ./frontend/templates:/usr/share/nginx/html
+    restart: always
+    depends_on:
+      - api-gateway
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth-service
+      - user-service
+      - product-service
+      - order-service
+      - subscription-service
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - USER_SERVICE_URL=http://user-service:5002
+      - PRODUCT_SERVICE_URL=http://product-service:5003
+      - ORDER_SERVICE_URL=http://order-service:5004
+      - SUBSCRIPTION_SERVICE_URL=http://subscription-service:5005
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/api-gateway:/app
+    restart: always
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mysql
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql/auth_db
+      - JWT_SECRET_KEY=dev-jwt-secret-change-in-production
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/auth-service:/app
+    restart: always
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    depends_on:
+      - mysql
+      - auth-service
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql/user_db
+      - JWT_SECRET_KEY=dev-jwt-secret-change-in-production
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/user-service:/app
+    restart: always
+
+  product-service:
+    build:
+      context: ./backend/product-service
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    depends_on:
+      - mysql
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql/product_db
+      - JWT_SECRET_KEY=dev-jwt-secret-change-in-production
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/product-service:/app
+    restart: always
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5003"]
+
+  order-service:
+    build:
+      context: ./backend/order-service
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    depends_on:
+      - mysql
+      - product-service
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql/order_db
+      - JWT_SECRET_KEY=dev-jwt-secret-change-in-production
+      - PRODUCT_SERVICE_URL=http://product-service:5003
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/order-service:/app
+    restart: always
+
+  subscription-service:
+    build:
+      context: ./backend/subscription-service
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    depends_on:
+      - mysql
+    environment:
+      - FLASK_APP=src/app.py
+      - FLASK_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql/subscription_db
+      - JWT_SECRET_KEY=dev-jwt-secret-change-in-production
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/subscription-service:/app
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=auth_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./backend/auth-service/init-db.sql:/docker-entrypoint-initdb.d/auth-init-db.sql
+      - ./backend/user-service/init-db.sql:/docker-entrypoint-initdb.d/user-init-db.sql
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=password
+    depends_on:
+      - mysql
+    restart: always
+
+volumes:
+  mysql_data:

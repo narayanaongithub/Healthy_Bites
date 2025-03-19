@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Breakfast Options - Healthy Bites</title>
+    <link rel="stylesheet" href="../static/css/landing.css" />
+    <link rel="stylesheet" href="../static/css/meals.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="index.html" class="navbar-brand">
+        <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
+        <h1>Healthy Bites</h1>
+      </a>
+      <div class="navbar-auth">
+        <div class="user-menu">
+          <button class="user-menu-btn">
+            My Account <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu">
+            <ul>
+              <li>
+                <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+              </li>
+              <li>
+                <a href="order-history.html"
+                  ><i class="fas fa-history"></i> Order History</a
+                >
+              </li>
+              <li>
+                <a href="subscription.html"
+                  ><i class="fas fa-star"></i> Subscription</a
+                >
+              </li>
+              <li>
+                <a href="products.html"><i class="fas fa-box"></i> Products</a>
+              </li>
+              <li>
+                <a href="landing.html" class="logout-btn"
+                  ><i class="fas fa-sign-out-alt"></i> Logout</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <a href="cart.html" class="cart-icon">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
+    </nav>
+
+    <header class="meals-header breakfast-header">
+      <div class="container">
+        <h1>Breakfast Options</h1>
+        <p>Start your day right with our nutritious breakfast selections</p>
+        <div class="header-buttons">
+          <a href="meal-selection.html" class="selection-btn">
+            <i class="fas fa-utensils"></i> Create Meal Plan
+          </a>
+          <a href="products.html?mealType=breakfast" class="selection-btn">
+            <i class="fas fa-th"></i> View All Breakfast
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="meals-section">
+      <div class="container">
+        <div class="meals-grid">
+          <!-- Meal cards will be dynamically loaded from the database -->
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading breakfast options...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
+            <h3>Healthy Bites</h3>
+          </div>
+          <div class="footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Our Menu</a></li>
+              <li><a href="#">How It Works</a></li>
+              <li><a href="#">FAQ</a></li>
+            </ul>
+          </div>
+          <div class="footer-contact">
+            <h4>Contact Us</h4>
+            <p><i class="fas fa-envelope"></i> info@healthybites.com</p>
+            <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+            <div class="social-icons">
+              <a href="#"><i class="fab fa-facebook-f"></i></a>
+              <a href="#"><i class="fab fa-instagram"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Healthy Bites. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../static/js/menu.js" type="text/javascript"></script>
+    <script src="../static/js/debug.js" type="text/javascript"></script>
+    <script src="../static/js/products.js"></script>
+  </body>
+</html>

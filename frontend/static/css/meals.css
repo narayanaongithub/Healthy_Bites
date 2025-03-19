@@ -1,0 +1,559 @@
+/* Meals Pages Shared Styles */
+
+/* Header Styles */
+.meals-header {
+  background-color: #0c3c30;
+  color: #f5efd5;
+  padding: 5rem 0;
+  text-align: center;
+  position: relative;
+}
+
+.meals-header .container {
+  position: relative;
+  z-index: 2;
+}
+
+.meals-header h1 {
+  font-size: 3.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.meals-header p {
+  font-size: 1.5rem;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Specific Header Backgrounds */
+.breakfast-header {
+  background: linear-gradient(135deg, #0c3c30 0%, #1a5a4a 100%);
+}
+
+.lunch-header {
+  background: linear-gradient(135deg, #0c3c30 0%, #1e6e5c 100%);
+}
+
+.dinner-header {
+  background: linear-gradient(135deg, #0c3c30 0%, #164a3e 100%);
+}
+
+/* Meals Section */
+.meals-section {
+  padding: 5rem 0;
+  background-color: #f9f9f5;
+}
+
+.meals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2.5rem;
+}
+
+/* Meal Card Styles */
+.meal-card {
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.meal-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.meal-image {
+  height: 220px;
+  position: relative;
+  overflow: hidden;
+  background-color: #e9f5f2;
+}
+
+.meal-image::before {
+  content: '\f2e7';  /* utensils icon */
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: #0c3c30;
+  opacity: 0.3;
+}
+
+.meal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.meal-card:hover .meal-image img {
+  transform: scale(1.05);
+}
+
+.meal-rating {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #0c3c30;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meal-rating i {
+  color: #ffc107;
+}
+
+.meal-content {
+  padding: 1.5rem;
+}
+
+.meal-content h3 {
+  color: #0c3c30;
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.meal-description {
+  color: #555;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.meal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.meal-nutrition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.meal-nutrition span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meal-nutrition i {
+  color: #0c3c30;
+}
+
+.meal-price-cart {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meal-price {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.add-to-cart {
+  background-color: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.add-to-cart:hover {
+  background-color: #555;
+}
+
+/* Footer Enhancements for Meal Pages */
+.footer {
+  margin-top: 4rem;
+}
+
+.footer-content {
+  padding-bottom: 2rem;
+}
+
+.footer-logo img {
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.footer-links ul li {
+  margin-bottom: 0.8rem;
+}
+
+.footer-links ul li a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.footer-contact p {
+  margin-bottom: 1rem;
+}
+
+.social-icons {
+  margin-top: 1.5rem;
+}
+
+.social-icons a {
+  margin-right: 1rem;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.social-icons a:hover {
+  transform: translateY(-3px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .meals-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  .meals-header h1 {
+    font-size: 3rem;
+  }
+  
+  .meals-header p {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .meals-header {
+    padding: 4rem 0;
+  }
+  
+  .meals-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .meals-header p {
+    font-size: 1.2rem;
+  }
+  
+  .meals-section {
+    padding: 3rem 0;
+  }
+  
+  .meals-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+  
+  .meal-image {
+    height: 200px;
+  }
+  
+  .footer-content {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .meals-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .meals-header {
+    padding: 3rem 0;
+  }
+  
+  .meals-header h1 {
+    font-size: 2rem;
+  }
+  
+  .meals-header p {
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
+  
+  .meal-price-cart {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .add-to-cart-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Navbar User Menu Styles */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-btn {
+  background-color: transparent;
+  color: #f5efd5;
+  border: 1px solid #f5efd5;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s ease;
+}
+
+.user-menu-btn:hover {
+  background-color: rgba(245, 239, 213, 0.1);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 100;
+  display: none;
+  margin-top: 0.5rem;
+}
+
+.dropdown-menu.active {
+  display: block;
+}
+
+.dropdown-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown-menu li {
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-menu li:last-child {
+  border-bottom: none;
+}
+
+.dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+  background-color: #f5f5f0;
+  color: #0c3c30;
+}
+
+.dropdown-menu i {
+  color: #0c3c30;
+  width: 16px;
+}
+
+/* Cart Icon */
+.cart-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+  font-size: 1.2rem;
+  color: #f5efd5;
+  text-decoration: none;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ff5252;
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #0c3c30;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification i {
+  color: #4caf50;
+}
+
+/* Added state for Add to Cart button */
+.add-to-cart.added {
+  background-color: #4caf50;
+}
+
+.header-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.selection-btn {
+  display: inline-block;
+  background-color: #2c5d34;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.selection-btn:hover {
+  background-color: #1e4024;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.selection-btn i {
+  margin-right: 0.5rem;
+}
+
+/* Add this at the end of the file */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  width: 100%;
+  text-align: center;
+}
+
+.loading-spinner i {
+  font-size: 3rem;
+  color: #0c3c30;
+  margin-bottom: 20px;
+}
+
+.loading-spinner p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error-message {
+  background-color: #fff0f0;
+  border: 1px solid #ffcaca;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 600px;
+  text-align: center;
+}
+
+.error-message h3 {
+  color: #d32f2f;
+  margin-top: 0;
+}
+
+.error-message ul {
+  text-align: left;
+  margin: 15px auto;
+  max-width: 400px;
+}
+
+.error-message code {
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.warning-message {
+  background-color: #fffde7;
+  border: 1px solid #fff9c4;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  text-align: center;
+  color: #ff8f00;
+}
+
+.retry-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+  background-color: #45a049;
+}
+
+.no-meals {
+  background-color: #f8f9fa;
+  padding: 30px;
+  text-align: center;
+  border-radius: 8px;
+  margin: 20px auto;
+  max-width: 600px;
+  color: #666;
+  font-size: 1.2rem;
+} 

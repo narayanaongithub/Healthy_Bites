@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login/Register - Healthy Bites</title>
+    <link rel="stylesheet" href="../static/css/styles.css" />
+    <link rel="stylesheet" href="../static/css/landing.css" />
+    <link rel="stylesheet" href="../static/css/auth.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="landing.html" class="navbar-brand">
+        <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
+        <h1>Healthy Bites</h1>
+      </a>
+      <div class="navbar-auth">
+        <a href="landing.html" class="auth-btn login-btn">Back to Home</a>
+      </div>
+    </nav>
+
+    <div class="auth-container">
+      <div class="auth-image"></div>
+      <div class="auth-forms">
+        <div class="tabs">
+          <div class="tab active" id="login-tab">Login</div>
+          <div class="tab" id="register-tab">Register</div>
+        </div>
+
+        <div class="form-container active" id="login-form">
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="login-email">Email</label>
+              <input type="email" id="login-email" required />
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" required />
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+            <div class="form-footer">
+              <p>
+                Don't have an account?
+                <a href="#" id="switch-to-register">Register now</a>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div class="form-container" id="register-form">
+          <form id="registerForm">
+            <div class="form-group">
+              <label for="register-name">Full Name</label>
+              <input type="text" id="register-name" required />
+            </div>
+            <div class="form-group">
+              <label for="register-email">Email</label>
+              <input type="email" id="register-email" required />
+            </div>
+            <div class="form-group">
+              <label for="register-phone">Phone Number</label>
+              <input
+                type="tel"
+                id="register-phone"
+                placeholder="(123) 456-7890"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="register-dob">Date of Birth</label>
+              <input type="date" id="register-dob" required />
+            </div>
+            <div class="form-group">
+              <label for="register-password">Password</label>
+              <input type="password" id="register-password" required />
+            </div>
+            <div class="form-group">
+              <label for="register-confirm-password">Confirm Password</label>
+              <input type="password" id="register-confirm-password" required />
+            </div>
+            <button type="submit" class="submit-btn">Register</button>
+            <div class="form-footer">
+              <p>
+                Already have an account?
+                <a href="#" id="switch-to-login">Login</a>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="../static/js/menu.js" type="text/javascript"></script>
+    <script src="../static/js/auth.js"></script>
+  </body>
+</html>
+
