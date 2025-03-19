@@ -14,6 +14,8 @@ let checkoutBtn;
 let promoCodeInput;
 let applyPromoBtn;
 let cartCountElement;
+let userMenuBtn;
+let userDropdown;
 
 // Constants
 const DELIVERY_FEE = 3.99;
@@ -31,6 +33,29 @@ function initializeDOMElements() {
   promoCodeInput = document.getElementById("promoCode");
   applyPromoBtn = document.getElementById("applyPromo");
   cartCountElement = document.getElementById("cartCount");
+  userMenuBtn = document.querySelector(".user-menu-btn");
+  userDropdown = document.querySelector(".dropdown-menu");
+}
+
+// Function to initialize dropdown functionality
+function initializeDropdown() {
+  if (userMenuBtn && userDropdown) {
+    userMenuBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      userDropdown.classList.toggle("active");
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function (event) {
+      if (
+        !userMenuBtn.contains(event.target) &&
+        !userDropdown.contains(event.target)
+      ) {
+        userDropdown.classList.remove("active");
+      }
+    });
+  }
 }
 
 // Function to update cart count
@@ -97,51 +122,62 @@ function updateCartDisplay() {
     const itemPrice = Number(item.price) || 0;
     const itemQuantity = item.quantity || 1;
 
-    // Fix image path and add cache busting
-    let itemImage = item.image || "../static/images/logo.jpeg";
+    // Fix image path using products.js approach
+    const timestamp = new Date().getTime();
 
-    // Handle image path formatting
-    if (itemImage.includes("?")) {
-      // Image already has query params, just use as is
-      itemImage = itemImage;
+    // Use the full path if available, otherwise construct it
+    let itemImage;
+    if (item.image_full_path) {
+      // Use the complete path directly
+      itemImage = item.image_full_path;
     } else {
-      // Process the image path to ensure correct extension and add cache busting
-      const timestamp = new Date().getTime();
+      // Get the meal type
+      const productType =
+        item.meal_type ||
+        (typeof item.image === "string" && item.image.includes("breakfast")
+          ? "breakfast"
+          : typeof item.image === "string" && item.image.includes("lunch")
+          ? "lunch"
+          : typeof item.image === "string" && item.image.includes("dinner")
+          ? "dinner"
+          : "default");
 
-      // If it's a meal image, ensure it has the right extension
-      if (
-        itemImage.includes("breakfast-") ||
-        itemImage.includes("lunch-") ||
-        itemImage.includes("dinner-")
-      ) {
-        // Extract the meal type and number
-        const parts = itemImage.split("/");
-        const filename = parts[parts.length - 1].split(".")[0]; // Get filename without extension
+      // Use the image if provided, otherwise use a default
+      itemImage = item.image || "";
 
-        if (filename) {
-          // Always use .jpg for meal images
-          itemImage = `../static/images/${filename}.jpg?t=${timestamp}`;
-        } else {
-          // Fallback with cache busting
-          itemImage = `${itemImage}?t=${timestamp}`;
-        }
-      } else {
-        // For other images, just add cache busting
-        itemImage = `${itemImage}?t=${timestamp}`;
+      // If it's just a filename without path, add the path
+      if (itemImage && !itemImage.startsWith("../")) {
+        itemImage = `../static/images/${itemImage}`;
       }
     }
 
-    // Add error handling for images
-    const imgErrorHandler = `onerror="this.onerror=null; 
-      if(this.src.includes('breakfast')) { 
-        this.src='../static/images/breakfast.webp';
-      } else if(this.src.includes('lunch')) {
-        this.src='../static/images/lunch.webp';
-      } else if(this.src.includes('dinner')) {
-        this.src='../static/images/dinner.webp';
-      } else {
-        this.src='../static/images/logo.jpeg';
-      }"`;
+    // Add cache busting
+    if (itemImage && !itemImage.includes("?")) {
+      itemImage = `${itemImage}?t=${timestamp}`;
+    }
+
+    // Determine product type for fallback image
+    const productType =
+      item.meal_type ||
+      (typeof item.image === "string" && item.image.includes("breakfast")
+        ? "breakfast"
+        : typeof item.image === "string" && item.image.includes("lunch")
+        ? "lunch"
+        : typeof item.image === "string" && item.image.includes("dinner")
+        ? "dinner"
+        : "default");
+
+    // Use the appropriate fallback image
+    const fallbackImage =
+      productType === "lunch"
+        ? "lunch.webp"
+        : productType === "dinner"
+        ? "dinner.jpg"
+        : productType === "breakfast"
+        ? "breakfast.jpg"
+        : "logo.jpeg";
+
+    const imgErrorHandler = `onerror="this.onerror=null; this.src='../static/images/${fallbackImage}?t=${timestamp}';"`;
 
     cartItem.innerHTML = `
       <div class="cart-item-info">
@@ -323,21 +359,22 @@ function showNotification(message) {
   }, 3000);
 }
 
-// Initialize everything when DOM is loaded
+// Main initialization function
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize DOM elements
   initializeDOMElements();
+  updateCartDisplay();
+  initializeDropdown();
 
-  // Add event listener to apply promo button
+  // Add event listener to Apply Promo button
   if (applyPromoBtn) {
     applyPromoBtn.addEventListener("click", handlePromoCode);
   }
 
-  // Add event listener to checkout button
+  // Add event listener to Checkout button
   if (checkoutBtn) {
     checkoutBtn.addEventListener("click", function () {
       if (cart.length > 0) {
-        // Store order details in localStorage for checkout page
+        // Calculate values for order summary
         const subtotal = parseFloat(
           subtotalPriceElement.textContent.replace("$", "")
         );
@@ -346,8 +383,22 @@ document.addEventListener("DOMContentLoaded", function () {
           totalPriceElement.textContent.replace("$", "")
         );
 
+        // Make sure each item has the image_full_path property set
+        const processedItems = cart.map((item) => {
+          // Clone the item to avoid modifying the original
+          const processedItem = { ...item };
+
+          // Ensure image_full_path is available
+          if (!processedItem.image_full_path && processedItem.image) {
+            processedItem.image_full_path = `../static/images/${processedItem.image}`;
+          }
+
+          return processedItem;
+        });
+
+        // Store order summary for checkout page
         const orderSummary = {
-          items: cart,
+          items: processedItems,
           subtotal: subtotal,
           tax: tax,
           deliveryFee: DELIVERY_FEE,
@@ -355,40 +406,8 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         localStorage.setItem("orderSummary", JSON.stringify(orderSummary));
-        window.location.href = "checkout.html";
       }
-    });
-  }
-
-  // Initialize the page
-  updateCartDisplay();
-
-  // Add user menu dropdown functionality
-  const userMenuBtn = document.getElementById("userMenuBtn");
-  const userDropdown = document.getElementById("userDropdown");
-
-  if (userMenuBtn && userDropdown) {
-    console.log("Setting up user dropdown menu in cart page");
-
-    userMenuBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      userDropdown.classList.toggle("active");
-      console.log(
-        "User dropdown toggled:",
-        userDropdown.classList.contains("active")
-      );
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener("click", function (e) {
-      if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-        userDropdown.classList.remove("active");
-      }
-    });
-  } else {
-    console.error("User menu elements not found in cart page:", {
-      userMenuBtn,
-      userDropdown,
+      window.location.href = "checkout.html";
     });
   }
 
@@ -405,3 +424,35 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// Add dropdown functionality for the My Account button
+(function () {
+  document.addEventListener("DOMContentLoaded", function () {
+    const userMenuBtn = document.getElementById("userMenuBtn");
+    const userDropdown = document.getElementById("userDropdown");
+
+    if (userMenuBtn && userDropdown) {
+      userMenuBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        userDropdown.classList.toggle("active");
+        console.log(
+          "Dropdown toggled, active:",
+          userDropdown.classList.contains("active")
+        );
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", function (event) {
+        if (
+          !userMenuBtn.contains(event.target) &&
+          !userDropdown.contains(event.target)
+        ) {
+          userDropdown.classList.remove("active");
+        }
+      });
+    } else {
+      console.log("Menu elements not found:", { userMenuBtn, userDropdown });
+    }
+  });
+})();

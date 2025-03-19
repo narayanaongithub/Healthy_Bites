@@ -1,13 +1,50 @@
 // JavaScript for Checkout Page
 
-// Get order summary from localStorage
-const orderSummary = JSON.parse(localStorage.getItem("orderSummary")) || {
-  items: [],
-  subtotal: 0,
-  tax: 0,
-  deliveryFee: 3.99,
-  total: 0,
-};
+// Check if orderSummary exists in localStorage
+let orderSummary = JSON.parse(localStorage.getItem("orderSummary"));
+
+// If no order summary exists, create one from the cart
+if (!orderSummary) {
+  // Get cart items and create order summary
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  // Process the cart items to ensure they have proper image paths
+  const processedCart = cart.map((item) => {
+    // Clone the item to avoid reference issues
+    const newItem = { ...item };
+
+    // Ensure image_full_path exists
+    if (!newItem.image_full_path && newItem.image) {
+      newItem.image_full_path = `../static/images/${newItem.image}`;
+    }
+
+    return newItem;
+  });
+
+  // Calculate subtotal from cart
+  const subtotal = processedCart.reduce(
+    (sum, item) => sum + item.price * (item.quantity || 1),
+    0
+  );
+  // Calculate tax (assuming 8% tax rate)
+  const taxRate = 0.08;
+  const tax = subtotal * taxRate;
+  // Standard delivery fee
+  const deliveryFee = 3.99;
+  // Calculate total
+  const total = subtotal + tax + deliveryFee;
+
+  // Create the order summary
+  orderSummary = {
+    items: processedCart,
+    subtotal: subtotal,
+    tax: tax,
+    deliveryFee: deliveryFee,
+    total: total,
+  };
+
+  // Save to localStorage
+  localStorage.setItem("orderSummary", JSON.stringify(orderSummary));
+}
 
 // DOM elements
 const summaryItemsContainer = document.querySelector(".summary-items");
@@ -32,51 +69,62 @@ function updateOrderSummary() {
 
   // Add each item to the summary
   orderSummary.items.forEach((item) => {
-    // Fix image path and add cache busting
-    let itemImage = item.image || "../static/images/logo.jpeg";
+    // Handle image paths the exact same way as in cart.js
+    const timestamp = new Date().getTime();
 
-    // Handle image path formatting
-    if (itemImage.includes("?")) {
-      // Image already has query params, just use as is
-      itemImage = itemImage;
+    // Directly use the image_full_path if available
+    let itemImage;
+    if (item.image_full_path) {
+      // Use the complete path directly
+      itemImage = item.image_full_path;
     } else {
-      // Process the image path to ensure correct extension and add cache busting
-      const timestamp = new Date().getTime();
+      // Get the meal type
+      const productType =
+        item.meal_type ||
+        (typeof item.image === "string" && item.image.includes("breakfast")
+          ? "breakfast"
+          : typeof item.image === "string" && item.image.includes("lunch")
+          ? "lunch"
+          : typeof item.image === "string" && item.image.includes("dinner")
+          ? "dinner"
+          : "default");
 
-      // If it's a meal image, ensure it has the right extension
-      if (
-        itemImage.includes("breakfast-") ||
-        itemImage.includes("lunch-") ||
-        itemImage.includes("dinner-")
-      ) {
-        // Extract the meal type and number
-        const parts = itemImage.split("/");
-        const filename = parts[parts.length - 1].split(".")[0]; // Get filename without extension
+      // Use the image if provided, otherwise use a default
+      itemImage = item.image || "";
 
-        if (filename) {
-          // Always use .jpg for meal images
-          itemImage = `../static/images/${filename}.jpg?t=${timestamp}`;
-        } else {
-          // Fallback with cache busting
-          itemImage = `${itemImage}?t=${timestamp}`;
-        }
-      } else {
-        // For other images, just add cache busting
-        itemImage = `${itemImage}?t=${timestamp}`;
+      // If it's just a filename without path, add the path
+      if (itemImage && !itemImage.startsWith("../")) {
+        itemImage = `../static/images/${itemImage}`;
       }
     }
 
-    // Add error handling for images
-    const imgErrorHandler = `onerror="this.onerror=null; 
-      if(this.src.includes('breakfast')) { 
-        this.src='../static/images/breakfast.webp';
-      } else if(this.src.includes('lunch')) {
-        this.src='../static/images/lunch.webp';
-      } else if(this.src.includes('dinner')) {
-        this.src='../static/images/dinner.webp';
-      } else {
-        this.src='../static/images/logo.jpeg';
-      }"`;
+    // Add cache busting
+    if (itemImage && !itemImage.includes("?")) {
+      itemImage = `${itemImage}?t=${timestamp}`;
+    }
+
+    // Determine product type for fallback image
+    const productType =
+      item.meal_type ||
+      (typeof item.image === "string" && item.image.includes("breakfast")
+        ? "breakfast"
+        : typeof item.image === "string" && item.image.includes("lunch")
+        ? "lunch"
+        : typeof item.image === "string" && item.image.includes("dinner")
+        ? "dinner"
+        : "default");
+
+    // Use the appropriate fallback image
+    const fallbackImage =
+      productType === "lunch"
+        ? "lunch.webp"
+        : productType === "dinner"
+        ? "dinner.jpg"
+        : productType === "breakfast"
+        ? "breakfast.jpg"
+        : "logo.jpeg";
+
+    const imgErrorHandler = `onerror="this.onerror=null; this.src='../static/images/${fallbackImage}?t=${timestamp}';"`;
 
     const summaryItem = document.createElement("div");
     summaryItem.className = "summary-item";
@@ -85,10 +133,12 @@ function updateOrderSummary() {
         <img src="${itemImage}" alt="${item.name}" ${imgErrorHandler} />
         <div class="item-details">
           <h4>${item.name}</h4>
-          <p>Quantity: ${item.quantity}</p>
+          <p>Quantity: ${item.quantity || 1}</p>
         </div>
       </div>
-      <div class="item-price">$${(item.price * item.quantity).toFixed(2)}</div>
+      <div class="item-price">$${(item.price * (item.quantity || 1)).toFixed(
+        2
+      )}</div>
     `;
     summaryItemsContainer.appendChild(summaryItem);
   });
@@ -186,7 +236,7 @@ placeOrderBtn.addEventListener("click", function () {
     const order = {
       id: generateOrderId(),
       date: new Date().toISOString(),
-      items: orderSummary.items,
+      items: JSON.parse(JSON.stringify(orderSummary.items)), // Deep clone to preserve all item properties including images
       subtotal: orderSummary.subtotal,
       tax: orderSummary.tax,
       deliveryFee: orderSummary.deliveryFee,
@@ -220,10 +270,18 @@ placeOrderBtn.addEventListener("click", function () {
     // Save order to localStorage
     saveOrder(order);
 
+    // Also store the same information in orderDetails for the confirmation page
+    localStorage.setItem(
+      "orderDetails",
+      JSON.stringify({
+        items: orderSummary.items,
+      })
+    );
+
     // Clear cart
     localStorage.removeItem("cart");
 
-    // Redirect to confirmation page
+    // Redirect to confirmation page with order ID
     window.location.href = `order-confirmation.html?orderId=${order.id}`;
   } else {
     alert("Please fill in all required fields correctly.");
@@ -239,6 +297,21 @@ function generateOrderId() {
 function saveOrder(order) {
   // Get existing orders
   const orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+  // Make sure images are preserved properly for each item
+  if (order.items && Array.isArray(order.items)) {
+    order.items = order.items.map((item) => {
+      // Clone the item to avoid reference issues
+      const newItem = { ...item };
+
+      // Make sure image_full_path is present
+      if (!newItem.image_full_path && newItem.image) {
+        newItem.image_full_path = `../static/images/${newItem.image}`;
+      }
+
+      return newItem;
+    });
+  }
 
   // Add new order
   orders.push(order);
@@ -320,9 +393,39 @@ document.addEventListener("DOMContentLoaded", function () {
       const itemTotal = (item.price * (item.quantity || 1)).toFixed(2);
       totalPrice += parseFloat(itemTotal);
 
+      // Handle image paths the exact same way as in cart.js
+      const timestamp = new Date().getTime();
+
+      // Directly use the image_full_path if available
+      let itemImage =
+        item.image_full_path || `../static/images/${item.image || ""}`;
+
+      // Add cache busting
+      if (itemImage && !itemImage.includes("?")) {
+        itemImage = `${itemImage}?t=${timestamp}`;
+      }
+
+      // Get the meal type for fallback image
+      const productType = item.meal_type || "default";
+
+      // Use the appropriate fallback image
+      const fallbackImage =
+        productType === "lunch"
+          ? "lunch.webp"
+          : productType === "dinner"
+          ? "dinner.jpg"
+          : productType === "breakfast"
+          ? "breakfast.jpg"
+          : "logo.jpeg";
+
+      const imgErrorHandler = `onerror="this.onerror=null; this.src='../static/images/${fallbackImage}?t=${timestamp}';"`;
+
       const cartItemElement = document.createElement("div");
       cartItemElement.className = "checkout-item";
       cartItemElement.innerHTML = `
+        <div class="item-image">
+          <img src="${itemImage}" alt="${item.name}" ${imgErrorHandler} />
+        </div>
         <div class="item-details">
           <span class="item-name">${item.name}</span>
           <span class="item-quantity">x${item.quantity || 1}</span>
@@ -424,11 +527,19 @@ document.addEventListener("DOMContentLoaded", function () {
           })
         );
 
+        // Also store the same information in orderDetails for the confirmation page
+        localStorage.setItem(
+          "orderDetails",
+          JSON.stringify({
+            items: cart,
+          })
+        );
+
         // Clear cart
         localStorage.setItem("cart", JSON.stringify([]));
 
         // Redirect to confirmation page
-        window.location.href = "order-confirmation.html";
+        window.location.href = `order-confirmation.html?orderId=${data.order.id}`;
       } catch (error) {
         console.error("Error creating order:", error);
         showNotification("Failed to create order. Please try again.", "error");

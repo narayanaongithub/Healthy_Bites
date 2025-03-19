@@ -712,9 +712,36 @@ function addToCart(product) {
     // Increment quantity if product already in cart
     cart[existingProductIndex].quantity += 1;
   } else {
+    // Create a copy of the product with quantity 1
+    let productCopy = { ...product, quantity: 1 };
+
+    // Get meal type from product
+    const productMealType = product.meal_type || "default";
+
+    // Get the image URL directly from database
+    let imagePath = product.image_url || "";
+
+    // Special handling for Protein Breakfast Bowl
+    if (product.name === "Protein Breakfast Bowl") {
+      imagePath = "breakfast-2.jpeg";
+    }
+
+    // Default image if none provided from database
+    if (!imagePath) {
+      imagePath = `${productMealType}.jpg`;
+    }
+
+    // Store the raw database image path (filename only)
+    productCopy.image = imagePath;
+
+    // Store the meal type for fallback purposes
+    productCopy.meal_type = productMealType;
+
+    // Store the complete image path ready to use in HTML
+    productCopy.image_full_path = `../static/images/${imagePath}`;
+
     // Add product to cart with quantity 1
-    const newProduct = { ...product, quantity: 1 };
-    cart.push(newProduct);
+    cart.push(productCopy);
   }
 
   // Save cart back to localStorage

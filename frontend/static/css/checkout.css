@@ -268,20 +268,17 @@ input[type="tel"]:focus {
   display: flex;
   justify-content: space-between;
   margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
 }
 
 .summary-item:last-child {
   margin-bottom: 0;
-  padding-bottom: 0;
   border-bottom: none;
 }
 
 .item-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .item-info img {
@@ -291,10 +288,22 @@ input[type="tel"]:focus {
   border-radius: 4px;
 }
 
+.item-image {
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.item-image img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
 .item-details h4 {
-  margin: 0 0 0.25rem 0;
-  color: #333;
+  margin: 0;
   font-size: 1rem;
+  color: #333;
 }
 
 .item-details p {
