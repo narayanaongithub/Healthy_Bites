@@ -146,6 +146,7 @@ services:
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
       - ./backend/auth-service/init-db.sql:/docker-entrypoint-initdb.d/auth-init-db.sql
       - ./backend/user-service/init-db.sql:/docker-entrypoint-initdb.d/user-init-db.sql
+      - ./backend/subscription-service/init-db.sql:/docker-entrypoint-initdb.d/subscription-init-db.sql
     restart: always
 
   phpmyadmin:

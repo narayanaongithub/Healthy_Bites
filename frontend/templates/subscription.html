@@ -11,6 +11,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
     <style>
+      /* Override styles to fix the form issue */
       html,
       body {
         height: 100%;
@@ -26,7 +27,14 @@
       .subscription-container {
         flex: 1 0 auto;
         padding: 2rem;
-        min-height: 60vh;
+        min-height: auto;
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        position: relative;
+        z-index: 5;
+        margin-top: 1rem;
       }
       .footer {
         flex-shrink: 0;
@@ -34,44 +42,106 @@
         background-color: #0c3c30;
         color: #f5efd5;
         padding: 2rem 0 1rem 0;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Form specific styles */
+      input[type="text"]:focus {
+        border-color: #0c3c30 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(12, 60, 48, 0.1) !important;
+      }
+
+      .subscribe-btn:hover {
+        background-color: #145244 !important;
+      }
+
+      .back-home-btn:hover {
+        background-color: #145244 !important;
+      }
+
+      /* Notification styling */
+      .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+
+      .notification {
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        transform: translateX(0);
+        opacity: 1;
+        transition: all 0.3s ease-in-out;
+      }
+
+      .notification.success {
+        border-left: 4px solid #28a745;
+      }
+
+      .notification.error {
+        border-left: 4px solid #dc3545;
+      }
+
+      .notification.fade-out {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      /* Form validation feedback */
+      .input-feedback {
+        font-size: 0.85rem;
+        margin-top: 5px;
+        color: #dc3545;
+      }
+
+      .input-feedback.error {
+        color: #dc3545;
+      }
+
+      input.error {
+        border-color: #dc3545 !important;
+      }
+
+      /* Spinner for loading state */
+      .fa-spinner {
+        animation: spin 1s infinite linear;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Disable button styling */
+      button:disabled {
+        opacity: 0.7 !important;
+        cursor: not-allowed !important;
       }
     </style>
-    <script>
-      // Check if stylesheets are loaded properly
-      window.addEventListener("load", function () {
-        const styleSheets = document.styleSheets;
-        const loadedSheets = [];
-
-        for (let i = 0; i < styleSheets.length; i++) {
-          try {
-            const sheet = styleSheets[i];
-            if (sheet.href) {
-              loadedSheets.push(sheet.href);
-            }
-          } catch (e) {
-            console.warn("Error checking stylesheet:", e);
-          }
-        }
-
-        console.log("Loaded stylesheets:", loadedSheets);
-
-        // Ensure the footer is positioned correctly
-        const body = document.body;
-        const footer = document.querySelector(".footer");
-
-        if (footer) {
-          console.log("Footer found, ensuring correct positioning");
-          footer.style.marginTop = "auto";
-        }
-      });
-    </script>
   </head>
   <body
     class="subscription-page"
     style="min-height: 100vh; display: flex; flex-direction: column"
   >
     <!-- Header/Navigation Bar -->
-    <nav class="navbar">
+    <nav
+      class="navbar"
+      style="
+        position: relative;
+        z-index: 20;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      "
+    >
       <a href="index.html" class="navbar-brand">
         <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
         <h1>Healthy Bites</h1>
@@ -122,56 +192,241 @@
     <!-- Main Content -->
     <div
       class="subscription-container"
-      style="flex: 1; min-height: 60vh; display: block; padding: 2rem 1rem 4rem"
+      style="
+        flex: 1;
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 2rem 1rem 2rem;
+        margin-bottom: 2rem;
+        margin-top: 2rem;
+        position: relative;
+        z-index: 5;
+      "
     >
-      <div class="subscription-card">
-        <div id="subscription-form-container">
-          <h1>Subscription</h1>
-          <p>Subscribe to get special discounts and benefits</p>
+      <div
+        class="subscription-card"
+        style="
+          background-color: #fff;
+          border-radius: 10px;
+          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+          max-width: 500px;
+          margin: 0 auto;
+          padding: 2rem;
+          border-top: 4px solid #0c3c30;
+          position: relative;
+          z-index: 5;
+          overflow: visible;
+          margin-top: 1rem;
+          margin-bottom: 2rem;
+        "
+      >
+        <div
+          id="subscription-form-container"
+          style="height: auto; overflow: visible"
+        >
+          <h1
+            style="
+              color: #0c3c30;
+              font-size: 1.8rem;
+              margin-bottom: 0.5rem;
+              text-align: center;
+            "
+          >
+            SUBSCRIPTION
+          </h1>
+          <p style="color: #666; text-align: center; margin-bottom: 2rem">
+            Subscribe to get special 15% discount and benefits
+          </p>
 
           <form id="subscriptionForm">
-            <div class="form-group">
-              <label for="cardNumber">Card Number</label>
+            <div class="form-group" style="margin-bottom: 1.2rem">
+              <label
+                for="cardNumber"
+                style="
+                  display: block;
+                  margin-bottom: 0.5rem;
+                  color: #333;
+                  font-weight: 500;
+                "
+                >Card Number</label
+              >
               <input
                 type="text"
                 id="cardNumber"
                 placeholder="1234 5678 9012 3456"
                 required
+                style="
+                  width: 100%;
+                  padding: 0.8rem 1rem;
+                  border: 1px solid #ddd;
+                  border-radius: 4px;
+                  font-size: 1rem;
+                  transition: border-color 0.3s;
+                "
               />
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="expiryDate">Expiration Date</label>
+            <div class="form-row" style="display: flex; gap: 1rem">
+              <div class="form-group" style="flex: 1; margin-bottom: 1.2rem">
+                <label
+                  for="expiryDate"
+                  style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    color: #333;
+                    font-weight: 500;
+                  "
+                  >Expiration Date</label
+                >
                 <input
                   type="text"
                   id="expiryDate"
                   placeholder="MM/YY"
                   required
+                  style="
+                    width: 100%;
+                    padding: 0.8rem 1rem;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 1rem;
+                    transition: border-color 0.3s;
+                  "
                 />
               </div>
-              <div class="form-group">
-                <label for="cvv">CVV</label>
-                <input type="text" id="cvv" placeholder="123" required />
+              <div class="form-group" style="flex: 1; margin-bottom: 1.2rem">
+                <label
+                  for="cvv"
+                  style="
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    color: #333;
+                    font-weight: 500;
+                  "
+                  >CVV</label
+                >
+                <input
+                  type="text"
+                  id="cvv"
+                  placeholder="123"
+                  required
+                  style="
+                    width: 100%;
+                    padding: 0.8rem 1rem;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 1rem;
+                    transition: border-color 0.3s;
+                  "
+                />
               </div>
             </div>
-            <div class="form-group">
-              <label for="cardName">Name on Card</label>
-              <input type="text" id="cardName" required />
+            <div class="form-group" style="margin-bottom: 1.2rem">
+              <label
+                for="cardName"
+                style="
+                  display: block;
+                  margin-bottom: 0.5rem;
+                  color: #333;
+                  font-weight: 500;
+                "
+                >Name on Card</label
+              >
+              <input
+                type="text"
+                id="cardName"
+                required
+                style="
+                  width: 100%;
+                  padding: 0.8rem 1rem;
+                  border: 1px solid #ddd;
+                  border-radius: 4px;
+                  font-size: 1rem;
+                  transition: border-color 0.3s;
+                "
+              />
             </div>
-            <div class="form-actions">
-              <button type="submit" class="subscribe-btn">Subscribe Now</button>
+            <div
+              class="form-actions"
+              style="margin-top: 2rem; text-align: center"
+            >
+              <button
+                type="submit"
+                class="subscribe-btn"
+                style="
+                  background-color: #0c3c30;
+                  color: white;
+                  border: none;
+                  padding: 0.8rem 2rem;
+                  font-size: 1rem;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  transition: background-color 0.3s;
+                  font-weight: 500;
+                "
+              >
+                Subscribe Now
+              </button>
             </div>
           </form>
         </div>
 
-        <div id="subscription-success" style="display: none">
-          <div class="success-icon">
+        <div
+          id="subscription-success"
+          style="display: none; text-align: center; padding: 1rem"
+        >
+          <div
+            class="success-icon"
+            style="font-size: 4rem; color: #28a745; margin-bottom: 1rem"
+          >
             <i class="fas fa-check-circle"></i>
           </div>
-          <h2>Subscription Successful!</h2>
-          <p>Thank you for subscribing to our membership program</p>
-          <p>You now have access to special discounts and benefits</p>
-          <a href="index.html" class="back-home-btn">Back to Home</a>
+          <h2 style="color: #0c3c30; margin-bottom: 1rem">
+            Subscription Successful!
+          </h2>
+          <p style="color: #666; margin-bottom: 0.5rem">
+            Thank you for subscribing to our membership program
+          </p>
+          <p style="color: #666; margin-bottom: 1.5rem">
+            You now have access to special 15% discount on all orders
+          </p>
+          <div
+            style="
+              background-color: #f8f9fa;
+              padding: 1rem;
+              border-radius: 8px;
+              margin-bottom: 1.5rem;
+            "
+          >
+            <p style="color: #333; font-weight: 500; margin-bottom: 0.5rem">
+              Subscription Details:
+            </p>
+            <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.9rem">
+              • Card: <span id="card-display">●●●● ●●●● ●●●● 1234</span>
+            </p>
+            <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.9rem">
+              • Active until:
+              <span id="subscription-end-date">30 days from today</span>
+            </p>
+            <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.9rem">
+              • Auto-renewal: <span style="color: #28a745">Enabled</span>
+            </p>
+          </div>
+          <a
+            href="index.html"
+            class="back-home-btn"
+            style="
+              display: inline-block;
+              background-color: #0c3c30;
+              color: white;
+              text-decoration: none;
+              padding: 0.8rem 2rem;
+              border-radius: 4px;
+              margin-top: 1rem;
+              transition: background-color 0.3s;
+            "
+            >Back to Home</a
+          >
         </div>
       </div>
     </div>
@@ -185,6 +440,8 @@
         bottom: 0;
         width: 100%;
         flex-shrink: 0;
+        z-index: 10;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       "
     >
       <div class="container">

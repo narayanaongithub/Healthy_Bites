@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 import os
-import requests
 from datetime import datetime, timedelta
 
 # Initialize Flask app
@@ -66,8 +65,12 @@ class Subscription(db.Model):
 with app.app_context():
     db.create_all()
     
-    # Add the single monthly subscription plan if the database is empty
-    if not Subscription.query.first():
+    # Check if we need to create a sample subscription for development purposes
+    sample_subscription_enabled = os.environ.get('ENABLE_SAMPLE_SUBSCRIPTION', 'false').lower() == 'true'
+    
+    # Only add the sample subscription if explicitly enabled and database is empty
+    if sample_subscription_enabled and not Subscription.query.first():
+        print("Creating sample subscription as enabled by environment variable")
         monthly_plan = Subscription(
             user_id=1,  # Assuming a default user_id
             start_date=datetime.utcnow(),
@@ -83,6 +86,7 @@ with app.app_context():
         )
         db.session.add(monthly_plan)
         db.session.commit()
+        print("Sample subscription created successfully")
 
 # Routes
 @app.route('/api/subscriptions', methods=['POST'])
@@ -219,4 +223,4 @@ def health_check():
     return jsonify({'status': 'healthy', 'service': 'subscription-service'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5003, debug=True)
+    app.run(host='0.0.0.0', port=5005, debug=True)
