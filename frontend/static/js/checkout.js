@@ -6,6 +6,45 @@ let checkoutData = JSON.parse(localStorage.getItem("checkoutData"));
 // Check if orderSummary exists in localStorage
 let orderSummary = JSON.parse(localStorage.getItem("orderSummary"));
 
+// Function to show notifications
+function showNotification(message, type = "success") {
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  // Style the notification
+  Object.assign(notification.style, {
+    position: "fixed",
+    top: "20px",
+    right: "20px",
+    padding: "15px 20px",
+    borderRadius: "4px",
+    color: "white",
+    backgroundColor:
+      type === "success" ? "#4CAF50" : type === "error" ? "#F44336" : "#2196F3",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+    zIndex: "1000",
+    transition: "opacity 0.5s, transform 0.5s",
+    opacity: "0",
+    transform: "translateY(-20px)",
+  });
+
+  // Show notification with animation
+  setTimeout(() => {
+    notification.style.opacity = "1";
+    notification.style.transform = "translateY(0)";
+  }, 10);
+
+  // Hide notification after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    notification.style.transform = "translateY(-20px)";
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
+
 // If we have checkoutData from the new process, use it
 if (checkoutData && checkoutData.pricing) {
   console.log("Using checkoutData:", checkoutData);
@@ -334,7 +373,7 @@ function validateForm() {
 
 // Place order button event listener
 if (placeOrderBtn) {
-  placeOrderBtn.addEventListener("click", function () {
+  placeOrderBtn.addEventListener("click", async function () {
     if (validateForm()) {
       // Get form data
       const formData = {
@@ -353,60 +392,105 @@ if (placeOrderBtn) {
           expressDelivery && expressDelivery.checked ? "express" : "standard",
       };
 
-      // Create order object
-      const order = {
-        id: generateOrderId(),
-        date: new Date().toISOString(),
-        items: JSON.parse(JSON.stringify(orderSummary.items)), // Deep clone to preserve all item properties including images
-        subtotal: orderSummary.subtotal,
-        tax: orderSummary.tax,
-        deliveryFee: orderSummary.deliveryFee,
-        total: orderSummary.total,
-        shipping: {
-          name: formData.fullName,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zip,
-        },
-        status: "Processing",
-      };
+      // Get order summary data
+      const orderItems = orderSummary.items;
+      const subtotal = orderSummary.subtotal;
+      const tax = orderSummary.tax;
+      const deliveryFee = orderSummary.deliveryFee;
+      const total = orderSummary.total;
+      const discountApplied = orderSummary.discountApplied || false;
+      const discountAmount = orderSummary.discountAmount || 0;
+      const discountRate = orderSummary.discountRate || 0;
 
-      // Check if user is a subscriber to include discount info
-      const userData = JSON.parse(localStorage.getItem("userData")) || {};
-      const isSubscriber =
-        userData.subscription && userData.subscription.active;
+      try {
+        // Show processing message
+        showNotification("Processing your order...", "info");
 
-      if (isSubscriber) {
-        // Calculate the discount amount (15% of original subtotal)
-        const originalSubtotal = orderSummary.subtotal / 0.85;
-        const discountAmount = originalSubtotal * 0.15;
+        // Get user data and token
+        const userData = JSON.parse(localStorage.getItem("userData")) || {};
+        const token = localStorage.getItem("accessToken");
 
-        // Add discount info to the order
-        order.originalSubtotal = originalSubtotal;
-        order.discountAmount = discountAmount;
-        order.discountPercentage = 15;
-        order.isSubscriberDiscount = true;
+        if (!token) {
+          showNotification("You must be logged in to place an order", "error");
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 2000);
+          return;
+        }
+
+        // Prepare order data for API
+        const orderData = {
+          items: orderItems,
+          shipping_address: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zip}`,
+          discount_applied: discountApplied,
+          discount_amount: discountAmount,
+          discount_rate: discountRate,
+          tax_rate: tax / subtotal, // Calculate actual tax rate
+          delivery_fee: deliveryFee,
+          status: "pending",
+        };
+
+        console.log("Sending order to API:", orderData);
+
+        // Send order to backend API
+        const response = await fetch("http://localhost:5004/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(orderData),
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error(responseData.message || "Failed to place order");
+        }
+
+        console.log("Order placed successfully:", responseData);
+
+        // Generate order ID and create order object for order history
+        const orderId = responseData.order.id;
+        const orderDate = new Date().toISOString();
+
+        // Create order object for order history
+        const order = {
+          id: orderId,
+          date: orderDate,
+          status: "Processing",
+          items: orderItems,
+          subtotal: subtotal,
+          tax: tax,
+          deliveryFee: deliveryFee,
+          total: total,
+          discountApplied: discountApplied,
+          discountAmount: discountAmount,
+          shippingAddress: orderData.shipping_address,
+          paymentMethod: "Credit Card ****" + formData.cardNumber.slice(-4),
+        };
+
+        // Get existing orders and add new order
+        const orders = JSON.parse(localStorage.getItem("orders")) || [];
+        orders.unshift(order); // Add to beginning of array
+        localStorage.setItem("orders", JSON.stringify(orders));
+
+        // Clear cart
+        localStorage.removeItem("cart");
+        localStorage.removeItem("orderSummary");
+        localStorage.removeItem("checkoutData");
+
+        // Show success message
+        showNotification("Order placed successfully!", "success");
+
+        // Redirect to order confirmation page
+        setTimeout(() => {
+          window.location.href = `order-confirmation.html?orderId=${orderId}`;
+        }, 1500);
+      } catch (error) {
+        console.error("Error placing order:", error);
+        showNotification(`Error: ${error.message}`, "error");
       }
-
-      // Save order to localStorage
-      saveOrder(order);
-
-      // Also store the same information in orderDetails for the confirmation page
-      localStorage.setItem(
-        "orderDetails",
-        JSON.stringify({
-          items: orderSummary.items,
-        })
-      );
-
-      // Clear cart
-      localStorage.removeItem("cart");
-
-      // Redirect to confirmation page with order ID
-      window.location.href = `order-confirmation.html?orderId=${order.id}`;
-    } else {
-      alert("Please fill in all required fields correctly.");
     }
   });
 }
@@ -484,7 +568,7 @@ updateCartCount();
 
 document.addEventListener("DOMContentLoaded", function () {
   // API URL - Using our API Gateway
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "http://localhost:5004/api";
 
   // Get cart from localStorage
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -707,43 +791,5 @@ document.addEventListener("DOMContentLoaded", function () {
   // Only call this if we're on a page with the checkout form
   if (document.getElementById("checkout-form")) {
     populateFormWithUserData();
-  }
-
-  // Function to show notifications
-  function showNotification(message, type = "success") {
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    // Style the notification
-    Object.assign(notification.style, {
-      position: "fixed",
-      top: "20px",
-      right: "20px",
-      padding: "15px 20px",
-      borderRadius: "4px",
-      color: "white",
-      backgroundColor: type === "success" ? "#4CAF50" : "#F44336",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-      zIndex: "1000",
-      transition: "opacity 0.5s, transform 0.5s",
-      opacity: "0",
-      transform: "translateY(-20px)",
-    });
-
-    // Show notification with animation
-    setTimeout(() => {
-      notification.style.opacity = "1";
-      notification.style.transform = "translateY(0)";
-    }, 10);
-
-    // Hide notification after 3 seconds
-    setTimeout(() => {
-      notification.style.opacity = "0";
-      notification.style.transform = "translateY(-20px)";
-      setTimeout(() => notification.remove(), 500);
-    }, 3000);
   }
 });

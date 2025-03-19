@@ -64,27 +64,20 @@
         </div>
 
         <div class="order-filter">
-          <div class="search-box">
-            <input type="text" placeholder="Search orders..." />
-            <button><i class="fas fa-search"></i></button>
-          </div>
           <div class="filter-options">
-            <select>
+            <select id="statusFilter">
               <option value="all">All Orders</option>
-              <option value="processing">Processing</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
-            </select>
-            <select>
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="highest">Highest Amount</option>
-              <option value="lowest">Lowest Amount</option>
             </select>
           </div>
         </div>
 
         <div class="orders-list">
+          <!-- Orders will be displayed here -->
+
           <!-- Empty state -->
           <div class="empty-orders">
             <div class="empty-icon">
@@ -97,20 +90,6 @@
             </p>
             <a href="index.html" class="browse-meals-btn">Browse Meals</a>
           </div>
-        </div>
-
-        <div class="pagination" style="display: none">
-          <button class="prev-btn" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="page-numbers">
-            <button class="active">1</button>
-            <button>2</button>
-            <button>3</button>
-            <span>...</span>
-            <button>10</button>
-          </div>
-          <button class="next-btn"><i class="fas fa-chevron-right"></i></button>
         </div>
       </div>
     </div>

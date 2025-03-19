@@ -137,32 +137,134 @@ function createOrderCard(order) {
 }
 
 // Function to load and display orders
-function loadOrders() {
-  // Get orders from localStorage
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+async function loadOrders() {
+  try {
+    // Get user data and token
+    const userData = JSON.parse(localStorage.getItem("userData")) || {};
+    const token = userData.token;
 
-  // Clear current orders list
-  ordersList.innerHTML = "";
+    if (!token) {
+      console.error("User not logged in");
+      showEmptyOrders();
+      return;
+    }
 
-  if (orders.length === 0) {
-    // Show empty state
-    emptyOrders.style.display = "block";
-    pagination.style.display = "none";
-    return;
+    // Show loading state
+    ordersList.innerHTML =
+      '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Loading orders...</p></div>';
+
+    // Fetch orders from API
+    const response = await fetch("http://localhost:5000/api/orders", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch orders");
+    }
+
+    const ordersData = await response.json();
+    console.log("Orders from API:", ordersData);
+
+    // Clear current orders list
+    ordersList.innerHTML = "";
+
+    if (!ordersData || ordersData.length === 0) {
+      showEmptyOrders();
+      return;
+    }
+
+    // Hide empty state
+    emptyOrders.style.display = "none";
+    pagination.style.display = "flex";
+
+    // Process and display orders
+    ordersData.forEach((order) => {
+      // Format the order for display
+      const formattedOrder = formatApiOrder(order);
+      const orderCard = createOrderCard(formattedOrder);
+      ordersList.appendChild(orderCard);
+    });
+
+    // Add event listeners to order action buttons
+    addOrderActionListeners();
+
+    // Save orders to localStorage for offline access
+    localStorage.setItem(
+      "orders",
+      JSON.stringify(ordersData.map(formatApiOrder))
+    );
+  } catch (error) {
+    console.error("Error loading orders:", error);
+    ordersList.innerHTML = `<div class="error"><i class="fas fa-exclamation-circle"></i><p>Error loading orders: ${error.message}</p></div>`;
+
+    // Fallback to localStorage if API fails
+    const offlineOrders = JSON.parse(localStorage.getItem("orders")) || [];
+    if (offlineOrders.length > 0) {
+      setTimeout(() => {
+        ordersList.innerHTML =
+          '<div class="notice"><i class="fas fa-info-circle"></i><p>Showing cached orders from your last session</p></div>';
+        offlineOrders.forEach((order) => {
+          const orderCard = createOrderCard(order);
+          ordersList.appendChild(orderCard);
+        });
+        addOrderActionListeners();
+      }, 2000);
+    }
   }
+}
 
-  // Hide empty state
-  emptyOrders.style.display = "none";
-  pagination.style.display = "flex";
+// Function to show empty orders state
+function showEmptyOrders() {
+  emptyOrders.style.display = "block";
+  pagination.style.display = "none";
+}
 
-  // Add each order to the list
-  orders.forEach((order) => {
-    const orderCard = createOrderCard(order);
-    ordersList.appendChild(orderCard);
+// Function to format API order data for display
+function formatApiOrder(apiOrder) {
+  // Convert items from API format to display format
+  const items = apiOrder.items.map((item) => {
+    return {
+      id: item.product_id,
+      name: item.product_name,
+      price: item.price,
+      quantity: item.quantity,
+      image: `../static/images/${item.product_name
+        .toLowerCase()
+        .replace(/\s+/g, "-")}.jpg`, // Generate image path from name
+      subtotal: item.subtotal || item.price * item.quantity,
+    };
   });
 
-  // Add event listeners to order action buttons
-  addOrderActionListeners();
+  // Get discount info from API response
+  const discountApplied = apiOrder.discount_applied || false;
+  const discountAmount = apiOrder.discount_amount || 0;
+  const originalAmount = apiOrder.original_amount || apiOrder.total_amount;
+
+  // Convert API order to display format
+  return {
+    id: apiOrder.id,
+    date: apiOrder.created_at,
+    status: capitalizeFirstLetter(apiOrder.status || "pending"),
+    items: items,
+    subtotal: discountApplied
+      ? originalAmount - discountAmount
+      : originalAmount,
+    originalSubtotal: discountApplied ? originalAmount : undefined,
+    tax: apiOrder.tax_amount || apiOrder.total_amount * 0.08,
+    deliveryFee: apiOrder.delivery_fee || 3.99,
+    total: apiOrder.total_amount,
+    isSubscriberDiscount: discountApplied,
+    discountAmount: discountAmount,
+    shippingAddress: apiOrder.shipping_address || "No address provided",
+  };
+}
+
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Function to add event listeners to order action buttons
@@ -195,8 +297,9 @@ function addOrderActionListeners() {
 
 // Function to reorder items
 function reorderItems(orderId) {
+  // Get orders from localStorage
   const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  const order = orders.find((o) => o.id === orderId);
+  const order = orders.find((o) => String(o.id) === String(orderId));
 
   if (order) {
     // Get current cart
@@ -204,11 +307,21 @@ function reorderItems(orderId) {
 
     // Add items from order to cart
     order.items.forEach((item) => {
-      const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+      const existingItem = cart.find(
+        (cartItem) => String(cartItem.id) === String(item.id)
+      );
+
       if (existingItem) {
         existingItem.quantity += item.quantity;
       } else {
-        cart.push({ ...item });
+        // Create a new cart item with the necessary properties
+        cart.push({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        });
       }
     });
 
@@ -217,6 +330,25 @@ function reorderItems(orderId) {
 
     // Show success message
     showNotification("Items added to cart successfully!");
+
+    // Update cart count in header
+    const cartCountElement = document.getElementById("cartCount");
+    if (cartCountElement) {
+      const totalItems = cart.reduce(
+        (sum, item) => sum + (item.quantity || 1),
+        0
+      );
+      cartCountElement.textContent = totalItems;
+    }
+
+    // Provide feedback to user asking if they want to go to cart
+    setTimeout(() => {
+      if (confirm("Items added to cart. Do you want to go to your cart now?")) {
+        window.location.href = "cart.html";
+      }
+    }, 500);
+  } else {
+    showNotification("Could not find order items", "error");
   }
 }
 
@@ -246,279 +378,77 @@ function showNotification(message) {
   }, 3000);
 }
 
-// Initialize the page when DOM is loaded
-document.addEventListener("DOMContentLoaded", function () {
-  // API URL - Using our API Gateway
-  const API_BASE_URL = "http://localhost:5000/api";
+// Function to filter orders based on search and filters
+function filterOrders() {
+  const statusFilter = document.getElementById("statusFilter");
 
-  // Check if user is logged in
-  function isLoggedIn() {
-    return (
-      localStorage.getItem("accessToken") && localStorage.getItem("userData")
+  // Get all orders from the cached API data
+  const allOrders = JSON.parse(localStorage.getItem("orders")) || [];
+
+  // If no orders, show empty state
+  if (allOrders.length === 0) {
+    showEmptyOrders();
+    return;
+  }
+
+  // Apply status filter if selected
+  let filteredOrders = allOrders;
+  if (statusFilter && statusFilter.value !== "all") {
+    const status = statusFilter.value.toLowerCase();
+    filteredOrders = allOrders.filter(
+      (order) => order.status.toLowerCase() === status
     );
   }
 
-  // Function to fetch order history from API
-  async function fetchOrderHistory() {
-    if (!isLoggedIn()) {
-      return [];
-    }
+  // Clear current orders list
+  ordersList.innerHTML = "";
 
-    const token = localStorage.getItem("accessToken");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch order history");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching order history:", error);
-      return [];
-    }
+  // If no results after filtering, show message
+  if (filteredOrders.length === 0) {
+    ordersList.innerHTML = `
+      <div class="no-results">
+        <i class="fas fa-filter"></i>
+        <h3>No orders match your filter</h3>
+        <p>Try adjusting your filter criteria</p>
+        <button class="reset-filter-btn" onclick="resetFilters()">Reset Filters</button>
+      </div>
+    `;
+    return;
   }
 
-  // Function to display order history
-  function displayOrderHistory(orders) {
-    const ordersContainer = document.querySelector(".order-history-list");
-    if (!ordersContainer) return;
+  // Display filtered orders
+  filteredOrders.forEach((order) => {
+    const orderCard = createOrderCard(order);
+    ordersList.appendChild(orderCard);
+  });
 
-    if (!orders || orders.length === 0) {
-      ordersContainer.innerHTML = `
-        <div class="empty-orders">
-          <p>You haven't placed any orders yet.</p>
-          <a href="products.html" class="primary-btn">Browse Products</a>
-        </div>
-      `;
-      return;
-    }
+  // Add event listeners to order action buttons
+  addOrderActionListeners();
+}
 
-    // Sort orders by date (newest first)
-    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    ordersContainer.innerHTML = "";
-
-    orders.forEach((order) => {
-      const orderDate = new Date(order.created_at);
-
-      const orderElement = document.createElement("div");
-      orderElement.className = "order-card";
-
-      // Generate HTML for order items
-      const itemsList = order.items
-        .map(
-          (item) => `
-        <div class="order-item">
-          <span class="item-name">${item.product_name}</span>
-          <span class="item-quantity">x${item.quantity}</span>
-          <span class="item-price">$${(item.price * item.quantity).toFixed(
-            2
-          )}</span>
-        </div>
-      `
-        )
-        .join("");
-
-      orderElement.innerHTML = `
-        <div class="order-header">
-          <div class="order-info">
-            <h3>Order #${order.id}</h3>
-            <p class="order-date">${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}</p>
-          </div>
-          <div class="order-status ${order.status}">
-            ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-          </div>
-        </div>
-        <div class="order-details">
-          <div class="order-items">
-            ${itemsList}
-          </div>
-          <div class="order-summary">
-            <p class="delivery-address"><strong>Delivery Address:</strong> ${
-              order.shipping_address || "Not provided"
-            }</p>
-            <p class="order-total"><strong>Total:</strong> $${order.total_amount.toFixed(
-              2
-            )}</p>
-          </div>
-        </div>
-        <div class="order-actions">
-          <button class="reorder-btn" data-order-id="${
-            order.id
-          }">Reorder</button>
-          ${
-            order.status === "pending"
-              ? `<button class="cancel-order-btn" data-order-id="${order.id}">Cancel Order</button>`
-              : ""
-          }
-        </div>
-      `;
-
-      ordersContainer.appendChild(orderElement);
-    });
-
-    // Add event listeners to buttons
-    document.querySelectorAll(".reorder-btn").forEach((button) => {
-      button.addEventListener("click", function () {
-        const orderId = this.getAttribute("data-order-id");
-        reorderItems(orders.find((order) => order.id == orderId));
-      });
-    });
-
-    document.querySelectorAll(".cancel-order-btn").forEach((button) => {
-      button.addEventListener("click", async function () {
-        const orderId = this.getAttribute("data-order-id");
-
-        if (confirm("Are you sure you want to cancel this order?")) {
-          try {
-            await cancelOrder(orderId);
-            showNotification("Order cancelled successfully");
-            // Refresh the page to show updated order status
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          } catch (error) {
-            showNotification("Failed to cancel order", "error");
-          }
-        }
-      });
-    });
+// Function to reset filters
+function resetFilters() {
+  const statusFilter = document.getElementById("statusFilter");
+  if (statusFilter) {
+    statusFilter.value = "all";
   }
+  filterOrders();
+}
 
-  // Function to cancel an order
-  async function cancelOrder(orderId) {
-    if (!isLoggedIn()) {
-      throw new Error("User not logged in");
-    }
+// Initialize the page when DOM is loaded
+document.addEventListener("DOMContentLoaded", function () {
+  loadOrders();
 
-    const token = localStorage.getItem("accessToken");
-
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to cancel order");
-    }
-
-    return await response.json();
-  }
-
-  // Function to reorder items from previous order
-  function reorderItems(order) {
-    if (!order || !order.items || order.items.length === 0) {
-      showNotification("Cannot reorder. Order items not found.", "error");
-      return;
-    }
-
-    // Convert order items to cart format
-    const cartItems = order.items.map((item) => ({
-      id: item.product_id,
-      name: item.product_name,
-      price: item.price,
-      quantity: item.quantity,
-    }));
-
-    // Save to cart
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-
-    // Show notification
-    showNotification("Items added to cart");
-
-    // Redirect to cart page
-    setTimeout(() => {
-      window.location.href = "cart.html";
-    }, 1500);
-  }
-
-  // Function to show notifications
-  function showNotification(message, type = "success") {
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    // Style the notification
-    Object.assign(notification.style, {
-      position: "fixed",
-      top: "20px",
-      right: "20px",
-      padding: "15px 20px",
-      borderRadius: "4px",
-      color: "white",
-      backgroundColor: type === "success" ? "#4CAF50" : "#F44336",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-      zIndex: "1000",
-      transition: "opacity 0.5s, transform 0.5s",
-      opacity: "0",
-      transform: "translateY(-20px)",
-    });
-
-    // Show notification with animation
-    setTimeout(() => {
-      notification.style.opacity = "1";
-      notification.style.transform = "translateY(0)";
-    }, 10);
-
-    // Hide notification after 3 seconds
-    setTimeout(() => {
-      notification.style.opacity = "0";
-      notification.style.transform = "translateY(-20px)";
-      setTimeout(() => notification.remove(), 500);
-    }, 3000);
-  }
-
-  // Initialize the order history page
-  async function initOrderHistoryPage() {
-    // Check if user is logged in
-    if (!isLoggedIn()) {
-      document.querySelector(".order-history-container").innerHTML = `
-        <div class="login-message">
-          <h2>Please Login to View Order History</h2>
-          <p>You need to be logged in to view your order history.</p>
-          <a href="auth.html" class="primary-btn">Login / Register</a>
-        </div>
-      `;
-      return;
-    }
-
-    // Fetch and display order history
-    const orders = await fetchOrderHistory();
-    displayOrderHistory(orders);
-  }
-
-  // Initialize the page
-  initOrderHistoryPage();
-
-  // Add event listeners to filters
+  // Event listeners for search and filters
   if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      // Implement search functionality
-      loadOrders();
-    });
+    searchInput.addEventListener("input", filterOrders);
   }
 
   if (statusFilter) {
-    statusFilter.addEventListener("change", function () {
-      // Implement status filter functionality
-      loadOrders();
-    });
+    statusFilter.addEventListener("change", filterOrders);
   }
 
   if (sortFilter) {
-    sortFilter.addEventListener("change", function () {
-      // Implement sort functionality
-      loadOrders();
-    });
+    sortFilter.addEventListener("change", filterOrders);
   }
 });
