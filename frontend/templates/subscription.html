@@ -1,30 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Subscription - HealthyBites</title>
+    <title>Membership - HealthyBites</title>
     <link rel="stylesheet" href="../static/css/landing.css" />
-    <link rel="stylesheet" href="../static/css/profile.css" />
     <link rel="stylesheet" href="../static/css/subscription.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
-    <!-- Inline styles for dropdown fix -->
     <style>
-      .dropdown-menu.active {
-        display: block !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        transform: translateY(0) !important;
+      html,
+      body {
+        height: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
       }
-      #userMenuBtn {
-        cursor: pointer;
+      body {
+        display: flex;
+        flex-direction: column;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .subscription-container {
+        flex: 1 0 auto;
+        padding: 2rem;
+        min-height: 60vh;
+      }
+      .footer {
+        flex-shrink: 0;
+        margin-top: auto;
+        background-color: #0c3c30;
+        color: #f5efd5;
+        padding: 2rem 0 1rem 0;
       }
     </style>
+    <script>
+      // Check if stylesheets are loaded properly
+      window.addEventListener("load", function () {
+        const styleSheets = document.styleSheets;
+        const loadedSheets = [];
+
+        for (let i = 0; i < styleSheets.length; i++) {
+          try {
+            const sheet = styleSheets[i];
+            if (sheet.href) {
+              loadedSheets.push(sheet.href);
+            }
+          } catch (e) {
+            console.warn("Error checking stylesheet:", e);
+          }
+        }
+
+        console.log("Loaded stylesheets:", loadedSheets);
+
+        // Ensure the footer is positioned correctly
+        const body = document.body;
+        const footer = document.querySelector(".footer");
+
+        if (footer) {
+          console.log("Footer found, ensuring correct positioning");
+          footer.style.marginTop = "auto";
+        }
+      });
+    </script>
   </head>
-  <body class="subscription-page">
+  <body
+    class="subscription-page"
+    style="min-height: 100vh; display: flex; flex-direction: column"
+  >
+    <!-- Header/Navigation Bar -->
     <nav class="navbar">
       <a href="index.html" class="navbar-brand">
         <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
@@ -32,7 +78,7 @@
       </a>
       <div class="navbar-auth">
         <div class="user-menu">
-          <button type="button" class="user-menu-btn">
+          <button class="user-menu-btn">
             My Account <i class="fas fa-chevron-down"></i>
           </button>
           <div class="dropdown-menu">
@@ -48,6 +94,11 @@
               <li>
                 <a href="subscription.html" class="active"
                   ><i class="fas fa-star"></i> Subscription</a
+                >
+              </li>
+              <li>
+                <a href="meal-selection.html"
+                  ><i class="fas fa-utensils"></i> Meal Selection</a
                 >
               </li>
               <li>
@@ -68,234 +119,108 @@
       </div>
     </nav>
 
-    <div class="profile-container">
-      <div class="container">
-        <div class="profile-header">
-          <h1>Monthly Subscription</h1>
-          <p>Subscribe for exclusive benefits and discounts</p>
-        </div>
+    <!-- Main Content -->
+    <div
+      class="subscription-container"
+      style="flex: 1; min-height: 60vh; display: block; padding: 2rem 1rem 4rem"
+    >
+      <div class="subscription-card">
+        <div id="subscription-form-container">
+          <h1>Subscription</h1>
+          <p>Subscribe to get special discounts and benefits</p>
 
-        <div class="subscription-content">
-          <div class="subscription-benefits">
-            <h2>Subscription Benefits</h2>
-            <ul class="benefits-list">
-              <li>
-                <i class="fas fa-percentage"></i>
-                <div>
-                  <h3>15% Discount on All Orders</h3>
-                  <p>Save on every purchase you make</p>
-                </div>
-              </li>
-              <li>
-                <i class="fas fa-truck"></i>
-                <div>
-                  <h3>Free Express Delivery</h3>
-                  <p>Get your meals delivered faster at no extra cost</p>
-                </div>
-              </li>
-              <li>
-                <i class="fas fa-utensils"></i>
-                <div>
-                  <h3>Exclusive Menu Items</h3>
-                  <p>Access to special dishes only for subscribers</p>
-                </div>
-              </li>
-              <li>
-                <i class="fas fa-calendar-alt"></i>
-                <div>
-                  <h3>Meal Planning</h3>
-                  <p>Schedule your meals for the entire month</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="subscription-plans">
-            <h2>Choose Your Plan</h2>
-            <div class="plans-container">
-              <div class="plan-card" id="basicPlan">
-                <div class="plan-header">
-                  <h3>Basic</h3>
-                  <p class="plan-price">$49.99<span>/month</span></p>
-                </div>
-                <div class="plan-features">
-                  <ul>
-                    <li>
-                      <i class="fas fa-check"></i> 15% Discount on All Orders
-                    </li>
-                    <li><i class="fas fa-check"></i> Free Express Delivery</li>
-                    <li><i class="fas fa-times"></i> Exclusive Menu Items</li>
-                    <li><i class="fas fa-times"></i> Meal Planning</li>
-                  </ul>
-                </div>
-                <button class="select-plan-btn" data-plan="basic">
-                  Select Plan
-                </button>
-              </div>
-
-              <div class="plan-card featured" id="premiumPlan">
-                <div class="featured-badge">Most Popular</div>
-                <div class="plan-header">
-                  <h3>Premium</h3>
-                  <p class="plan-price">$79.99<span>/month</span></p>
-                </div>
-                <div class="plan-features">
-                  <ul>
-                    <li>
-                      <i class="fas fa-check"></i> 15% Discount on All Orders
-                    </li>
-                    <li><i class="fas fa-check"></i> Free Express Delivery</li>
-                    <li><i class="fas fa-check"></i> Exclusive Menu Items</li>
-                    <li><i class="fas fa-check"></i> Meal Planning</li>
-                  </ul>
-                </div>
-                <button class="select-plan-btn" data-plan="premium">
-                  Select Plan
-                </button>
-              </div>
+          <form id="subscriptionForm">
+            <div class="form-group">
+              <label for="cardNumber">Card Number</label>
+              <input
+                type="text"
+                id="cardNumber"
+                placeholder="1234 5678 9012 3456"
+                required
+              />
             </div>
-          </div>
-
-          <div
-            class="subscription-form"
-            id="subscriptionForm"
-            style="display: none"
-          >
-            <h2>Complete Your Subscription</h2>
-            <form id="completeSubscriptionForm">
+            <div class="form-row">
               <div class="form-group">
-                <label for="card-name">Name on Card</label>
-                <input type="text" id="card-name" required />
-              </div>
-              <div class="form-group">
-                <label for="card-number">Card Number</label>
+                <label for="expiryDate">Expiration Date</label>
                 <input
                   type="text"
-                  id="card-number"
-                  placeholder="1234 5678 9012 3456"
+                  id="expiryDate"
+                  placeholder="MM/YY"
                   required
                 />
               </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="exp-date">Expiration Date</label>
-                  <input
-                    type="text"
-                    id="exp-date"
-                    placeholder="MM/YY"
-                    required
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="cvv">CVV</label>
-                  <input type="text" id="cvv" placeholder="123" required />
-                </div>
-              </div>
               <div class="form-group">
-                <label for="billing-address">Billing Address</label>
-                <input type="text" id="billing-address" required />
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="billing-city">City</label>
-                  <input type="text" id="billing-city" required />
-                </div>
-                <div class="form-group">
-                  <label for="billing-state">State</label>
-                  <input type="text" id="billing-state" required />
-                </div>
-                <div class="form-group">
-                  <label for="billing-zip">ZIP Code</label>
-                  <input type="text" id="billing-zip" required />
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="subscribe-btn">
-                  Subscribe Now
-                </button>
-                <button
-                  type="button"
-                  class="cancel-btn"
-                  id="cancelSubscription"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <div
-            class="current-subscription"
-            id="currentSubscription"
-            style="display: none"
-          >
-            <h2>Your Current Subscription</h2>
-            <div class="subscription-details">
-              <div class="subscription-info">
-                <h3>Plan: <span id="currentPlan">Premium</span></h3>
-                <p>Status: <span class="active-status">Active</span></p>
-                <p>
-                  Next billing date:
-                  <span id="nextBillingDate">June 15, 2023</span>
-                </p>
-                <p>Monthly fee: <span id="monthlyFee">$79.99</span></p>
-              </div>
-              <div class="subscription-actions">
-                <button
-                  class="cancel-subscription-btn"
-                  id="cancelSubscriptionBtn"
-                >
-                  Cancel Subscription
-                </button>
-                <button class="change-plan-btn" id="changePlanBtn">
-                  Change Plan
-                </button>
+                <label for="cvv">CVV</label>
+                <input type="text" id="cvv" placeholder="123" required />
               </div>
             </div>
+            <div class="form-group">
+              <label for="cardName">Name on Card</label>
+              <input type="text" id="cardName" required />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="subscribe-btn">Subscribe Now</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="subscription-success" style="display: none">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
           </div>
+          <h2>Subscription Successful!</h2>
+          <p>Thank you for subscribing to our membership program</p>
+          <p>You now have access to special discounts and benefits</p>
+          <a href="index.html" class="back-home-btn">Back to Home</a>
         </div>
       </div>
     </div>
 
-    <footer class="footer">
+    <!-- Footer -->
+    <footer
+      class="footer"
+      style="
+        margin-top: auto;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+        flex-shrink: 0;
+      "
+    >
       <div class="container">
         <div class="footer-content">
           <div class="footer-logo">
             <img src="../static/images/logo.jpeg" alt="HealthyBites Logo" />
-            <h2>Healthy Bites</h2>
+            <h3>Healthy Bites</h3>
           </div>
           <div class="footer-links">
-            <h3>Quick Links</h3>
+            <h4>Quick Links</h4>
             <ul>
-              <li><a href="index.html">Home</a></li>
-              <li><a href="meals.html">Meals</a></li>
-              <li><a href="about.html">About Us</a></li>
-              <li><a href="contact.html">Contact</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Our Menu</a></li>
+              <li><a href="#">How It Works</a></li>
+              <li><a href="#">FAQ</a></li>
             </ul>
           </div>
           <div class="footer-contact">
-            <h3>Contact Us</h3>
-            <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+            <h4>Contact Us</h4>
             <p><i class="fas fa-envelope"></i> info@healthybites.com</p>
-          </div>
-          <div class="footer-social">
-            <h3>Follow Us</h3>
+            <p><i class="fas fa-phone"></i> (123) 456-7890</p>
             <div class="social-icons">
               <a href="#"><i class="fab fa-facebook-f"></i></a>
-              <a href="#"><i class="fab fa-twitter"></i></a>
               <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-pinterest"></i></a>
+              <a href="#"><i class="fab fa-twitter"></i></a>
             </div>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2023 Healthy Bites. All rights reserved.</p>
+          <p>&copy; 2025 Healthy Bites. All rights reserved.</p>
         </div>
       </div>
     </footer>
 
-    <script src="../static/js/menu.js" type="text/javascript"></script>
+    <script src="../static/js/menu.js"></script>
     <script src="../static/js/subscription.js"></script>
-    <script src="../static/js/cart-count.js" type="text/javascript"></script>
+    <script src="../static/js/cart-count.js"></script>
   </body>
 </html>
